@@ -1,0 +1,30 @@
+## Refer to the FaceFormer to predict the vertex motion information
+checkpoint_dir: work_dir/train_face_3dmm_vertex_add_model_param
+test_mode: False
+
+model_name: Face3DMMOneHotFormer
+
+checkpoint: null
+
+max_epochs: 200
+check_val_every_n_epoch: 1
+
+lr: 0.0001
+wd: 0.0
+lr_decay_step: 20
+lr_decay_rate: 0.8
+
+dataset:
+  dataset_name: Face3DMMOneHotDataset
+  data_root: ./data/HDTF_preprocessed
+  batch_size: 1
+  fetch_length: 100
+  fetch_stride: 100
+  number_workers: 6
+
+Face3DMMFormer:
+  dataset: vocaset
+  feature_dim: 1024
+  period: 25
+  vertice_dim: 107127
+  use_mouth_mask: False

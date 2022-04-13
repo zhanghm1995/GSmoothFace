@@ -1,0 +1,35 @@
+## Refer to the FaceFormer to predict the vertex motion information
+checkpoint_dir: work_dir/train_face_2d_3d_fusion
+test_mode: False
+
+model_name: Face2D3DFusionFormer
+
+checkpoint: null
+
+max_epochs: 200
+check_val_every_n_epoch: 1
+
+lr: 0.0001
+wd: 0.0
+lr_decay_step: 20
+lr_decay_rate: 0.8
+
+teacher_forcing: True
+use_mouth_mask: True
+
+dataset:
+  dataset_name: Face2D3DDataset
+  data_root: ./data/HDTF_preprocessed
+  batch_size: 2
+  fetch_length: 75
+  fetch_stride: 75
+  number_workers: 6
+
+feature_dim: 1024
+
+Face2D3DFusionFormer:
+  dataset: vocaset
+  feature_dim: ${feature_dim}
+  period: 25
+  vertice_dim: 107127
+  use_mouth_mask: ${use_mouth_mask}
