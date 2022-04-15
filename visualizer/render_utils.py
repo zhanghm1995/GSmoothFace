@@ -13,8 +13,8 @@ import torch
 from torch import Tensor
 import trimesh
 
-from nvdiffrast_utils import MeshRenderer
-from bfm import ParametricFaceModel
+from .nvdiffrast_utils import MeshRenderer
+from .bfm import ParametricFaceModel
 
 
 class MyMeshRender(object):
