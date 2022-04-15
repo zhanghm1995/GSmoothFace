@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import math
-from wav2vec import Wav2Vec2Model
+from .wav2vec import Wav2Vec2Model
 from .pos_encoder import PositionalEncoding
 
 

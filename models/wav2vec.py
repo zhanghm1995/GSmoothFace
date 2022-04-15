@@ -1,3 +1,12 @@
+'''
+Copyright (c) 2022 by Haiming Zhang. All Rights Reserved.
+
+Author: Haiming Zhang
+Date: 2022-04-15 13:36:30
+Email: haimingzhang@link.cuhk.edu.cn
+Description: 
+'''
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,7 +17,6 @@ from transformers import Wav2Vec2Model,Wav2Vec2Config
 from transformers.modeling_outputs import BaseModelOutput
 from typing import Optional, Tuple
 _CONFIG_FOR_DOC = "Wav2Vec2Config"
-
 
 # the implementation of Wav2Vec2Model is borrowed from https://huggingface.co/transformers/_modules/transformers/models/wav2vec2/modeling_wav2vec2.html#Wav2Vec2Model
 # initialize our encoder with the pre-trained wav2vec 2.0 weights.
@@ -70,18 +78,19 @@ def linear_interpolation(features, input_fps, output_fps, output_len=None):
     output_features = F.interpolate(features,size=output_len,align_corners=True,mode='linear')
     return output_features.transpose(1, 2)
 
-
 class Wav2Vec2Model(Wav2Vec2Model):
     def __init__(self, config):
         super().__init__(config)
     def forward(
         self,
         input_values,
+        dataset,
         attention_mask=None,
         output_attentions=None,
         output_hidden_states=None,
         return_dict=None,
-        frame_num=None
+        frame_num=None,
+        output_fps=30
     ):
         self.config.output_attentions = True
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
@@ -93,7 +102,14 @@ class Wav2Vec2Model(Wav2Vec2Model):
         hidden_states = self.feature_extractor(input_values)
         hidden_states = hidden_states.transpose(1, 2)
 
-        hidden_states = linear_interpolation(hidden_states, 50, 25, output_len=frame_num)
+        if dataset == "BIWI":
+            # cut audio feature
+            if hidden_states.shape[1]%2 != 0:
+                hidden_states = hidden_states[:, :-1]
+            if frame_num and hidden_states.shape[1]>frame_num*2:
+                hidden_states = hidden_states[:, :frame_num*2]
+        elif dataset == "vocaset":
+            hidden_states = linear_interpolation(hidden_states, 50, output_fps, output_len=frame_num)
      
         if attention_mask is not None:
             output_lengths = self._get_feat_extract_output_lengths(attention_mask.sum(-1))
