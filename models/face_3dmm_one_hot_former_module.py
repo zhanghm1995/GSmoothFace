@@ -16,7 +16,6 @@ from scipy.io import wavfile
 from torch.nn import functional as F 
 import pytorch_lightning as pl
 
-import visualizer
 from .face_3dmm_one_hot_former import Face3DMMOneHotFormer
 
 
@@ -27,6 +26,8 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         self.config = config
 
         self.save_hyperparameters()
+
+        self.batch_size = self.config.dataset.batch_size
 
         ## Define the model
         self.model = Face3DMMOneHotFormer(config['Face3DMMFormer'])
@@ -54,9 +55,26 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
                           teacher_forcing=teacher_forcing, 
                           return_loss=return_loss, 
                           return_exp=return_exp)
-        
+
+    def _run_step(self, batch):
+        if self.config.supervise_exp:
+            pred_exp = self.model(
+                batch, self.criterion, teacher_forcing=self.config.teacher_forcing,
+                return_loss=False, return_exp=True)
+            loss = self.criterion(pred_exp, batch['gt_face_3d_params'])
+            loss = torch.mean(loss)
+        else:
+            loss = self.model(
+                batch, self.criterion, teacher_forcing=self.config.teacher_forcing)
+
+        return loss
+
     def training_step(self, batch, batch_idx):
-        audio = batch['raw_audio']
+        loss = self._run_step(batch)
+
+        ## Logging
+        self.log('train/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
+        return loss
 
         if self.config.supervise_exp:
             pred_exp = self.model(
@@ -74,18 +92,12 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         self.log('train/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
         return loss
         
-    # def validation_step(self, batch, batch_idx):
-    #     audio = batch['raw_audio']
-    #     template = torch.zeros((audio.shape[0], 64)).to(audio)
-    #     vertice = batch['gt_face_3d_params']
-    #     one_hot = batch['one_hot']
-
-    #     loss = self.model(
-    #         audio, template, vertice, one_hot, self.criterion, teacher_forcing=False)
+    def validation_step(self, batch, batch_idx):
+        loss = self._run_step(batch)
         
-    #     ## Calcuate the loss
-    #     self.log('val/total_loss', loss, on_epoch=True, prog_bar=True)
-    #     return loss
+        ## Logging
+        self.log('val/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
+        return loss
 
     def test_step(self, batch, batch_idx):
         audio = batch['raw_audio']

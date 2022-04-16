@@ -1,12 +1,15 @@
 ## Refer to the FaceFormer to predict the expression parameters
-checkpoint_dir: work_dir/train_face_3dmm_expression_mouth_mask_paper
-test_mode: False
+exp_name: full_model
 
-model_name: Face3DMMOneHotFormer
+checkpoint_dir: work_dir/demo_train
+test_mode: False
 
 checkpoint: null
 
-max_epochs: 200
+
+model_name: Face3DMMOneHotFormer
+
+max_epochs: 120
 check_val_every_n_epoch: 1
 
 lr: 0.0001
@@ -23,11 +26,11 @@ dataset:
   number_workers: 6
 
 teacher_forcing: False
-supervise_exp: True
+supervise_exp: False
 
 Face3DMMFormer:
   dataset: vocaset
   feature_dim: 1024
   period: 25
   vertice_dim: 64
-  use_mouth_mask: False
+  use_mouth_mask: True
