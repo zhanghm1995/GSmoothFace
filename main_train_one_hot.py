@@ -23,6 +23,7 @@ def parse_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str, default='./config/face_3dmm_expression_mouth_mask.yaml', help='the config file path')
     parser.add_argument('--gpu', type=int, nargs='+', default=(0, 1), help='specify gpu devices')
+    parser.add_argument('--exp_name', type=str, default=None, help='specify the experiment name')
     parser.add_argument('--checkpoint_dir', type=str, nargs='?', const="work_dir2/debug")
     parser.add_argument('--checkpoint', type=str, default=None, help="the pretrained checkpoint path")
     parser.add_argument('--test_mode', action='store_true', help="whether is a test mode")
@@ -32,6 +33,8 @@ def parse_config():
 
     if args.checkpoint_dir is None: # use the yaml value if don't specify the checkpoint_dir argument
         args.checkpoint_dir = config.checkpoint_dir
+    if args.exp_name is None:
+        args.exp_name = config.exp_name
     
     config.update(vars(args)) # override the configuration using the value in args
 
@@ -67,7 +70,7 @@ if not config['test_mode']:
     train_dataloader = get_3dmm_dataset(config['dataset'], split="small_train", shuffle=True)
     print(f"The training dataloader length is {len(train_dataloader)}")
 
-    # val_dataloader = get_3dmm_dataset(config['dataset'], split='voca_val', shuffle=False)
+    # val_dataloader = get_3dmm_dataset(config['dataset'], split='small_val', shuffle=False)
     # print(f"The validation dataloader length is {len(val_dataloader)}")
     val_dataloader = None
 

@@ -1,4 +1,4 @@
-## Face3DMMFormer
+## TalkingFaceFormer
 
 ## Dependencies
 Python 3.6

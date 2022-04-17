@@ -15,6 +15,7 @@ import torch.nn as nn
 from scipy.io import wavfile
 from torch.nn import functional as F 
 import pytorch_lightning as pl
+import subprocess
 
 from .face_3dmm_one_hot_former import Face3DMMOneHotFormer
 
@@ -123,7 +124,12 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         audio_data = audio[0].cpu().numpy()
         wavfile.write(osp.join(save_dir, f"{file_name}.wav"), 16000, audio_data)
 
-        ## Save video
+        ## Save rendered face images
         vis_dir = osp.join(save_dir, file_name)
         os.makedirs(vis_dir, exist_ok=True)
         self.visualizer.vis_3dmm_face(model_output, output_root=vis_dir)
+
+        ## Save the audio file
+        audio_file_path = osp.join(save_dir, f"{file_name}.wav")
+        command = f"cp {audio_file_path} {vis_dir}/audio.wav"
+        subprocess.call(command, shell=True)
