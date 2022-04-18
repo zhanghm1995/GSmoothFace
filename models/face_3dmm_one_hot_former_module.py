@@ -38,7 +38,7 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         if self.config.test_mode:
             from visualizer import Face3DMMVisualizer
             visualizer_config = self.config['visualizer']
-            self.visualizer = Face3DMMVisualizer(visualizer_config.deep3dface_dir)
+            self.visualizer = Face3DMMVisualizer(visualizer_config.deep3dface_dir, need_pose=True)
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), 

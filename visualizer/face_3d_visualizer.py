@@ -59,6 +59,12 @@ def _todict(matobj):
 
 class Face3DMMVisualizer(object):
     def __init__(self, deep3dface_dir, need_pose=True) -> None:
+        """initialization function
+
+        Args:
+            deep3dface_dir (str|Path): the .mat file directory
+            need_pose (bool, optional): whether rendering results with pose information. Defaults to True.
+        """
         assert osp.exists(deep3dface_dir), f'{deep3dface_dir} does not exist.'
         
         self.face_3dmm_mat_list = sorted(glob(osp.join(deep3dface_dir, "*.mat")))
