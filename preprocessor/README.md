@@ -13,7 +13,7 @@ I obtained our training data from HDTF dataset.
 ## Extract the landmarks
 In order to reconstruct the 3D face model, we need to extract the landmarks from the face images. You can run the following command to obtain the five landmarks and save them into txt files.
 ```bash
-python prepare_data.py
+python extract_landmarks.py
 ```
 Please modify the image path in the code to your own data path.
 
