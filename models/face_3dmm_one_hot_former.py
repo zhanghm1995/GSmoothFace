@@ -87,8 +87,8 @@ class Face3DMMOneHotFormer(nn.Module):
         # motion encoder
         self.vertice_map = nn.Linear(args.vertice_dim, args.feature_dim)
         # periodic positional encoding 
-        self.PPE = PeriodicPositionalEncoding(args.feature_dim, period = args.period)
-        # self.PPE = PositionalEncoding(args.feature_dim)
+        # self.PPE = PeriodicPositionalEncoding(args.feature_dim, period = args.period)
+        self.PPE = PositionalEncoding(args.feature_dim)
         # temporal bias
         self.biased_mask = init_biased_mask(n_head = 4, max_seq_len = 600, period=args.period)
         decoder_layer = nn.TransformerDecoderLayer(d_model=args.feature_dim, nhead=4, dim_feedforward=2*args.feature_dim, batch_first=True)        

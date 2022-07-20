@@ -1,0 +1,35 @@
+## Refer to the FaceFormer to predict the expression parameters
+exp_name: full_model
+
+log_dir: work_dir/AAAI/train_one_hot_3dmmformer
+test_mode: False
+
+checkpoint: null
+
+model_name: Face3DMMOneHotFormer
+
+max_epochs: 120
+check_val_every_n_epoch: 1
+
+lr: 0.0001
+wd: 0.0
+lr_decay_step: 20
+lr_decay_rate: 0.8
+
+dataset:
+  dataset_name: Face3DMMOneHotDataset
+  data_root: ./data/HDTF_face3dmmformer
+  batch_size: 1
+  fetch_length: 100
+  fetch_stride: 100
+  number_workers: 6
+
+teacher_forcing: False
+supervise_exp: False
+
+Face3DMMFormer:
+  dataset: vocaset
+  feature_dim: 1024
+  period: 25
+  vertice_dim: 64
+  use_mouth_mask: True
