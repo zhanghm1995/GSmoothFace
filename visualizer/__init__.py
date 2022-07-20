@@ -1,1 +1,1 @@
-from .face_3d_visualizer import Face3DMMVisualizer
+from .face_3d_visualizer import Face3DMMVisualizer, Face3DMMRenderer

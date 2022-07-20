@@ -23,8 +23,7 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         super(Face3DMMOneHotDataset, self).__init__(split, **kwargs)
         self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         
-        # self.one_hot_labels = np.eye(len(self.all_videos_dir))
-        self.one_hot_labels = np.eye(8)
+        self.one_hot_labels = np.eye(len(self.all_videos_dir))
         self.facemodel = BFMModel("./data/BFM/BFM_model_front.mat")
         
     def _get_mat_vector(self, face_params_dict,
@@ -71,13 +70,15 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
             
             face_3d_params_list.append(face_3d_params)
 
-        face_3d_params_arr = np.concatenate(face_3d_params_list, axis=0)
+        res_dict = dict()
         
-        face_origin_3d_params_arr = None
+        res_dict['gt_face_3d_params'] = np.concatenate(face_3d_params_list, axis=0)
+        
         if need_origin_params:
-            face_origin_3d_params_arr = np.concatenate(face_origin_3d_params_list, axis=0)
+            # (1, 257)
+            res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
 
-        return face_3d_params_arr, face_origin_3d_params_arr
+        return res_dict
 
     def _get_template(self, choose_video):
         ## Assume the first frame is the template face
@@ -95,15 +96,21 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         choose_video = self.all_videos_dir[main_idx] # choosed video directory name, str type
         start_idx = self.all_sliced_indices[main_idx][sub_idx] # the actual index in this video
 
+        data_dict = {}
+
         ## Get the GT raw audio vector
         audio_seq = self._slice_raw_audio(choose_video, start_idx) # (M, )
         if audio_seq is None:
             return None
         
-        audio_seq = np.squeeze(self.audio_processor(audio_seq, sampling_rate=16000).input_values)
+        audio_seq = np.squeeze(self.audio_processor(audio_seq, sampling_rate=self.audio_sample_rate).input_values)
+        data_dict['raw_audio'] = torch.tensor(audio_seq.astype(np.float32)) #(L, )
 
         ## Get the GT 3D face parameters
-        gt_face_3d_params_arr, _ = self._get_face_3d_params(choose_video, start_idx)
+        face_3d_params_dict = self._get_face_3d_params(choose_video, start_idx, need_origin_params=True)
+        data_dict.update(face_3d_params_dict)
+
+        gt_face_3d_params_arr = face_3d_params_dict['gt_face_3d_params']
 
         ## Get the template info
         template_face, id_coeff = self._get_template(choose_video)
@@ -111,10 +118,8 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         ## Get the GT 3D face vertex ()
         gt_face_3d_vertex = self.facemodel.compute_shape(
             id_coeff=id_coeff, exp_coeff=gt_face_3d_params_arr)
-
-        data_dict = {}
+        
         data_dict['gt_face_3d_params'] = torch.from_numpy(gt_face_3d_params_arr.astype(np.float32)) # (fetch_length, 64)
-        data_dict['raw_audio'] = torch.tensor(audio_seq.astype(np.float32)) #(L, )
         data_dict['one_hot'] = torch.FloatTensor(one_hot)
         data_dict['template'] = torch.FloatTensor(template_face.reshape((-1))) # (N,)
         data_dict['face_vertex'] = torch.FloatTensor(gt_face_3d_vertex)

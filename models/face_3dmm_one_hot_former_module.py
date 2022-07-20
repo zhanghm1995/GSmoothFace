@@ -18,6 +18,7 @@ import pytorch_lightning as pl
 import subprocess
 
 from .face_3dmm_one_hot_former import Face3DMMOneHotFormer
+from visualizer import Face3DMMRenderer
 
 
 class Face3DMMOneHotFormerModule(pl.LightningModule):
@@ -39,6 +40,9 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
             from visualizer import Face3DMMVisualizer
             visualizer_config = self.config['visualizer']
             self.visualizer = Face3DMMVisualizer(visualizer_config.deep3dface_dir, need_pose=True)
+        
+        ## Define the renderer for visualization
+        self.face_3dmm_renderer = Face3DMMRenderer()
     
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), 
@@ -92,13 +96,25 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         ## Calcuate the loss
         self.log('train/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
         return loss
-        
+
     def validation_step(self, batch, batch_idx):
+        pred_exp = self.forward(batch, criterion=self.criterion, 
+                                teacher_forcing=False, return_loss=False, return_exp=True)
         loss = self._run_step(batch)
         
         ## Logging
         self.log('val/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
+
+        ## Visualization
+        model_output = self.predict(batch, batch_idx)
+
+        self.face_3dmm_renderer.render_3dmm_face()
         return loss
+
+    def predict(self, batch, batch_idx):
+        model_output = self.model.predict(batch)
+        model_output = model_output.detach().cpu().numpy() # (seq_len, 64)
+
 
     def test_step(self, batch, batch_idx):
         audio = batch['raw_audio']

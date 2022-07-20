@@ -19,6 +19,7 @@ from easydict import EasyDict
 import cv2
 from .face_3d_params_utils import get_coeff_vector, rescale_mask_V2
 from .render_utils import MyMeshRender
+from utils.save_data import save_image_array_to_video
 
 
 def loadmat2(filename):
@@ -57,6 +58,29 @@ def _todict(matobj):
     return dict
 
 
+class Face3DMMRenderer(object):
+    def __init__(self) -> None:
+        opt = EasyDict(center=112.0, focal=1015.0, z_near=5.0, z_far=15.0)
+        self.renderer = MyMeshRender(opt)
+    
+    def render_3dmm_face(self, face_params, transform_params, need_save=True,
+                         output_dir=None, name=None, rgb_mode=False,
+                         audio_array=None):
+        ## Get the 3DMM coefficient parameters
+        coeff_matrix = torch.FloatTensor(get_coeff_vector(face_params)) # (B, 257)
+
+        self.renderer(coeff_matrix, None)
+        image = self.renderer.compute_rendered_image() # (B, 3, H, W)
+
+        ## Rescale the image to original size
+        scaled_image = rescale_mask_V2(image, transform_params)
+        
+        ## Save video
+        if need_save and output_dir is not None:
+            scaled_image = scaled_image[None]
+            save_image_array_to_video(scaled_image, output_dir, name, rgb_mode=rgb_mode, audio_array=audio_array)
+
+
 class Face3DMMVisualizer(object):
     def __init__(self, deep3dface_dir, need_pose=True) -> None:
         """initialization function
@@ -80,9 +104,7 @@ class Face3DMMVisualizer(object):
     def vis_3dmm_face(self, input, output_root=None):
         print("[INFO] Start visualization...")
 
-        if isinstance(input, np.ndarray):
-            input_array = input
-        elif isinstance(input, torch.Tensor):
+        if isinstance(input, np.ndarray) or isinstance(input, torch.Tensor):
             input_array = input
         elif isinstance(input, str):
             assert osp.exists(input), f'{input} does not exist.'

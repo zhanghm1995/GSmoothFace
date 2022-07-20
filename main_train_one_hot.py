@@ -77,12 +77,11 @@ if not config['test_mode']:
     ## 2) Start training
     trainer = pl.Trainer(gpus=1,
                          default_root_dir=config['log_dir'],
-                         max_epochs=config.max_epochs,
-                         check_val_every_n_epoch=config.check_val_every_n_epoch)
+                         **config['Trainer'])
     
     ## Resume the training state
-    predictions = trainer.fit(model, train_dataloader, val_dataloader, 
-                              ckpt_path=config.checkpoint)
+    trainer.fit(model, train_dataloader, val_dataloader, 
+                ckpt_path=config.checkpoint)
 else:
     print(f"{'='*25} Start Testing, Good Luck! {'='*25}")
 

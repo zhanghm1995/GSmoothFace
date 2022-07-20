@@ -34,8 +34,8 @@ def save_video(image, output_video_fname, image_size=512,
     print("Save video done!")
 
 
-def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
-                              need_change_channel_order=False,
+def save_image_array_to_video(image_array, output_dir, name=None, 
+                              fps=25, rgb_mode=False, 
                               audio_array=None, audio_sample_rate=16000):
     """Save the image array into video
 
@@ -54,14 +54,16 @@ def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
         tmp_video_file = tempfile.NamedTemporaryFile('w', suffix='.mp4', dir=output_dir)
         for frame in range(image_array.shape[1]):
             image_numpy = tensor2im(image_array[i][frame])
-            if need_change_channel_order:
+
+            if rgb_mode:
                 image_numpy = image_numpy[..., ::-1]
             
             if frame == 0:
-                img_shape = image_numpy.shape[:2]
+                ## Create the video writer
+                img_shape = image_numpy.shape[:2] # (H, W)
                 writer = cv2.VideoWriter(tmp_video_file.name, 
                                          cv2.VideoWriter_fourcc(*'mp4v'), 
-                                         fps, img_shape, True)
+                                         fps, img_shape[::-1], True)
             writer.write(image_numpy)
         
         writer.release()
@@ -77,11 +79,10 @@ def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
             audio_data = audio_array[i].cpu().numpy()
             wavfile.write(tmp_audio_file.name, audio_sample_rate, audio_data)
 
-            cmd = f'/usr/bin/ffmpeg -y -i {tmp_audio_file.name} -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
+            cmd = f'ffmpeg -y -i {tmp_audio_file.name} -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
         else:
-            cmd = f'/usr/bin/ffmpeg -y -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
-        subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # subprocess.call(cmd, shell=True)
+            cmd = f'ffmpeg -y -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
+        flag = subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def save_images(image_tensor, save_dir, epoch, global_step=None, name=None):
