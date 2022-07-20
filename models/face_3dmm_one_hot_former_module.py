@@ -98,18 +98,28 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        pred_exp = self.forward(batch, criterion=self.criterion, 
-                                teacher_forcing=False, return_loss=False, return_exp=True)
-        loss = self._run_step(batch)
+        # pred_exp = self.forward(batch, criterion=self.criterion, 
+        #                         teacher_forcing=False, return_loss=False, return_exp=True)
+        # loss = self._run_step(batch)
         
-        ## Logging
-        self.log('val/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
+        # ## Logging
+        # self.log('val/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
+        
+        if batch_idx % 2 != 0:
+            return
 
         ## Visualization
-        model_output = self.predict(batch, batch_idx)
+        model_output = self.model.predict(batch).detach() # (B, T, 64)
+        model_output = F.pad(model_output, (0, 0, 0, 1), mode="replicate")
 
-        self.face_3dmm_renderer.render_3dmm_face()
-        return loss
+        face3dmm_params = batch['gt_face_origin_3d_params']
+        face3dmm_params[:, :, 80:144] = model_output
+
+        save_dir = osp.join(self.logger.log_dir, "results/val", f"epoch_{self.current_epoch}")
+        self.face_3dmm_renderer.render_3dmm_face(face3dmm_params, 
+                                                 output_dir=save_dir,
+                                                 rgb_mode=True,
+                                                 name=batch_idx)
 
     def predict(self, batch, batch_idx):
         model_output = self.model.predict(batch)

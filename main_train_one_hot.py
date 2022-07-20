@@ -70,9 +70,8 @@ if not config['test_mode']:
     train_dataloader = get_3dmm_dataset(config['dataset'], split="train", shuffle=True)
     print(f"The training dataloader length is {len(train_dataloader)}")
 
-    # val_dataloader = get_3dmm_dataset(config['dataset'], split='small_val', shuffle=False)
-    # print(f"The validation dataloader length is {len(val_dataloader)}")
-    val_dataloader = None
+    val_dataloader = get_3dmm_dataset(config['dataset'], split="val", shuffle=False)
+    print(f"The validation dataloader length is {len(val_dataloader)}")
 
     ## 2) Start training
     trainer = pl.Trainer(gpus=1,

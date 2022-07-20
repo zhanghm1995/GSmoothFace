@@ -10,6 +10,7 @@ Description: The dataset to get one-hot vector like official FaceFormer
 
 import os.path as osp
 import numpy as np
+import scipy.io as spio
 import torch
 from torch.utils.data import Dataset
 from scipy.io import loadmat
@@ -18,12 +19,50 @@ from .base_video_dataset import BaseVideoDataset
 from .basic_bfm import BFMModel
 
 
+def _todict(matobj):
+    '''
+    A recursive function which constructs from matobjects nested dictionaries
+    '''
+    dict = {}
+    for strg in matobj._fieldnames:
+        elem = matobj.__dict__[strg]
+        if isinstance(elem, spio.matlab.mio5_params.mat_struct):
+            dict[strg] = _todict(elem)
+        else:
+            dict[strg] = elem
+    return dict
+
+
+def _check_keys(dict):
+    '''
+    checks if entries in dictionary are mat-objects. If yes
+    todict is called to change them to nested dictionaries
+    '''
+    for key in dict:
+        if isinstance(dict[key], spio.matlab.mio5_params.mat_struct):
+            dict[key] = _todict(dict[key])
+    return dict
+
+
+def loadmat2(filename):
+    '''
+    this function should be called instead of direct spio.loadmat
+    as it cures the problem of not properly recovering python dictionaries
+    from mat files. It calls the function check keys to cure all entries
+    which are still mat-objects
+    '''
+    data = spio.loadmat(filename, struct_as_record=False, squeeze_me=True)
+    return _check_keys(data)
+
+
 class Face3DMMOneHotDataset(BaseVideoDataset):
     def __init__(self, split, **kwargs) -> None:
         super(Face3DMMOneHotDataset, self).__init__(split, **kwargs)
         self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         
-        self.one_hot_labels = np.eye(len(self.all_videos_dir))
+        # self.one_hot_labels = np.eye(len(self.all_videos_dir))
+        self.one_hot_labels = np.eye(8)
+
         self.facemodel = BFMModel("./data/BFM/BFM_model_front.mat")
         
     def _get_mat_vector(self, face_params_dict,
@@ -55,6 +94,7 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
             np.ndarray: (L, C), L is the fetch length, C is the needed face parameters dimension
         """
         face_3d_params_list, face_origin_3d_params_list = [], []
+        trans_matrix_list = []
         for idx in range(start_idx, start_idx + self.fetch_length):
             face_3d_params_path = osp.join(self.data_root, video_dir, "deep3dface", f"{idx:06d}.mat")
             
@@ -70,12 +110,15 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
             
             face_3d_params_list.append(face_3d_params)
 
+            trans_matrix_list.append(loadmat2(face_3d_params_path)['transform_params'])
+
         res_dict = dict()
         
-        res_dict['gt_face_3d_params'] = np.concatenate(face_3d_params_list, axis=0)
+        res_dict['gt_face_3d_params'] = np.concatenate(face_3d_params_list, axis=0) # (T, 64)
+        # res_dict['trans_matrix'] = torch.FloatTensor(np.concatenate(trans_matrix_list, axis=0))
         
         if need_origin_params:
-            # (1, 257)
+            # (T, 257)
             res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
 
         return res_dict

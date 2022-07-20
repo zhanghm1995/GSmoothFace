@@ -11,11 +11,13 @@ import os
 import numpy as np
 import os.path as osp
 from glob import glob
+from scipy.misc import face
 from tqdm import tqdm
 from scipy.io import loadmat
 import scipy.io as spio
 import torch
 from easydict import EasyDict
+from einops import rearrange
 import cv2
 from .face_3d_params_utils import get_coeff_vector, rescale_mask_V2
 from .render_utils import MyMeshRender
@@ -63,22 +65,25 @@ class Face3DMMRenderer(object):
         opt = EasyDict(center=112.0, focal=1015.0, z_near=5.0, z_far=15.0)
         self.renderer = MyMeshRender(opt)
     
-    def render_3dmm_face(self, face_params, transform_params, need_save=True,
+    def render_3dmm_face(self, face_params, transform_params=None, need_save=True,
                          output_dir=None, name=None, rgb_mode=False,
                          audio_array=None):
-        ## Get the 3DMM coefficient parameters
-        coeff_matrix = torch.FloatTensor(get_coeff_vector(face_params)) # (B, 257)
+        # convert to (B, 257)
+        b = face_params.shape[0]
+        face_params = rearrange(face_params, 'b t c -> (b t) c', b=b)
 
-        self.renderer(coeff_matrix, None)
-        image = self.renderer.compute_rendered_image() # (B, 3, H, W)
+        ## Start rendering
+        self.renderer(face_params, None)
+        vis_image = self.renderer.compute_rendered_image() # (B, 3, H, W)
 
         ## Rescale the image to original size
-        scaled_image = rescale_mask_V2(image, transform_params)
+        if transform_params is not None:
+            vis_image = rescale_mask_V2(vis_image, transform_params)
         
         ## Save video
         if need_save and output_dir is not None:
-            scaled_image = scaled_image[None]
-            save_image_array_to_video(scaled_image, output_dir, name, rgb_mode=rgb_mode, audio_array=audio_array)
+            vis_image = rearrange(vis_image, '(b t) c h w -> b t c h w', b=b)
+            save_image_array_to_video(vis_image, output_dir, name, rgb_mode=rgb_mode, audio_array=audio_array)
 
 
 class Face3DMMVisualizer(object):
