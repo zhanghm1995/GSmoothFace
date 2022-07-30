@@ -68,6 +68,20 @@ class Face3DMMRenderer(object):
     def render_3dmm_face(self, face_params, transform_params=None, need_save=True,
                          output_dir=None, name=None, rgb_mode=False,
                          audio_array=None):
+        """Rendering the 3DMM face
+
+        Args:
+            face_params (Tensor): (B, T, 257)
+            transform_params (Tensor, optional): (B, T, 2, 3). Defaults to None.
+            need_save (bool, optional): _description_. Defaults to True.
+            output_dir (_type_, optional): _description_. Defaults to None.
+            name (_type_, optional): _description_. Defaults to None.
+            rgb_mode (bool, optional): _description_. Defaults to False.
+            audio_array (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         # convert to (B, 257)
         b = face_params.shape[0]
         face_params = rearrange(face_params, 'b t c -> (b t) c', b=b)

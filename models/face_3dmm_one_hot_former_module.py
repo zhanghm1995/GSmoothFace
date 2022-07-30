@@ -125,8 +125,28 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         model_output = self.model.predict(batch)
         model_output = model_output.detach().cpu().numpy() # (seq_len, 64)
 
-
     def test_step(self, batch, batch_idx):
+        audio = batch['raw_audio']
+        video_name = batch['video_name'][0]
+        
+        model_output = self.model.predict(batch)
+        model_output = F.pad(model_output, (0, 0, 0, 1), mode="replicate")
+
+        ## Create the saving directory
+        save_dir = osp.join(self.logger.log_dir, "vis")
+        if "/" in video_name:
+            folder = video_name.split("/")[0]
+            os.makedirs(osp.join(save_dir, folder), exist_ok=True)
+        else:
+            os.makedirs(save_dir, exist_ok=True)
+
+        self.face_3dmm_renderer.render_3dmm_face(face3dmm_params, 
+                                                 output_dir=save_dir,
+                                                 rgb_mode=True,
+                                                 name=batch_idx)
+
+
+    def test_step_old(self, batch, batch_idx):
         audio = batch['raw_audio']
         video_name = batch['video_name'][0]
         
