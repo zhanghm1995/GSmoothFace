@@ -88,8 +88,6 @@ def get_test_dataset(config):
         batch_size=config['batch_size'],
         shuffle=False,
         num_workers=config['number_workers'],
-        # pin_memory=True,
-        pin_memory=False,
         collate_fn=collate_fn
     )
     return data_loader

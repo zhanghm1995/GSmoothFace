@@ -84,7 +84,6 @@ else:
     print(f"[INFO] Load pretrained model from {config.checkpoint} for testing...")
     model = model.load_from_checkpoint(config.checkpoint, config=config)
 
-    # test_dataloader = get_3dmm_dataset(config['dataset'], split="voca_test", shuffle=False)
     test_dataloader = get_test_dataset(config['dataset'])
     print(f"The testing dataloader length is {len(test_dataloader)}")
     

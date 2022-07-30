@@ -23,10 +23,14 @@ lr_decay_rate: 0.8
 dataset:
   dataset_name: Face3DMMOneHotDataset
   data_root: ./data/HDTF_face3dmmformer
-  batch_size: 1
   fetch_length: 100
   fetch_stride: 100
+  batch_size: 1
   number_workers: 6
+
+  audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
+  video_name: train/WDA_KimSchrier_000
+  training_split: train
 
 teacher_forcing: False
 supervise_exp: False

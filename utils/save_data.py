@@ -12,6 +12,7 @@ import tempfile
 import cv2
 import subprocess
 from tqdm import tqdm
+import torch
 from .utils import tensor2im
 from scipy.io import wavfile
 
@@ -44,11 +45,14 @@ def save_image_array_to_video(image_array, output_dir, name=None,
         output_dir (_type_): _description_
         name (_type_, optional): _description_. Defaults to None.
         fps (int, optional): _description_. Defaults to 25.
-        audio_array (_type_, optional): _description_. Defaults to None.
+        audio_array (np.ndarray|Tensor): (B, L). Defaults to None.
         audio_sample_rate (int, optional): _description_. Defaults to 16000.
     """
     
     os.makedirs(output_dir, exist_ok=True)
+
+    if torch.is_tensor(audio_array):
+        audio_array = audio_array.cpu().numpy()
 
     for i in range(image_array.shape[0]):
         tmp_video_file = tempfile.NamedTemporaryFile('w', suffix='.mp4', dir=output_dir)
@@ -76,7 +80,7 @@ def save_image_array_to_video(image_array, output_dir, name=None,
         ## Combine the audio
         if audio_array is not None:
             tmp_audio_file = tempfile.NamedTemporaryFile('w', suffix='.wav', dir=output_dir)
-            audio_data = audio_array[i].cpu().numpy()
+            audio_data = audio_array[i]
             wavfile.write(tmp_audio_file.name, audio_sample_rate, audio_data)
 
             cmd = f'ffmpeg -y -i {tmp_audio_file.name} -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'

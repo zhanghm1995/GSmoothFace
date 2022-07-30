@@ -36,10 +36,10 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
 
         self.criterion = nn.MSELoss()
 
-        if self.config.test_mode:
-            from visualizer import Face3DMMVisualizer
-            visualizer_config = self.config['visualizer']
-            self.visualizer = Face3DMMVisualizer(visualizer_config.deep3dface_dir, need_pose=True)
+        # if self.config.test_mode:
+        #     from visualizer import Face3DMMVisualizer
+        #     visualizer_config = self.config['visualizer']
+        #     self.visualizer = Face3DMMVisualizer(visualizer_config.deep3dface_dir, need_pose=True)
         
         ## Define the renderer for visualization
         self.face_3dmm_renderer = Face3DMMRenderer()
@@ -126,7 +126,6 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         model_output = model_output.detach().cpu().numpy() # (seq_len, 64)
 
     def test_step(self, batch, batch_idx):
-        audio = batch['raw_audio']
         video_name = batch['video_name'][0]
         
         model_output = self.model.predict(batch)
@@ -139,12 +138,15 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
             os.makedirs(osp.join(save_dir, folder), exist_ok=True)
         else:
             os.makedirs(save_dir, exist_ok=True)
+        
+        face3dmm_params = torch.zeros((model_output.shape[:2]) + (257,)).to(model_output)
+        face3dmm_params[:, :, 80:144] = model_output
 
         self.face_3dmm_renderer.render_3dmm_face(face3dmm_params, 
                                                  output_dir=save_dir,
                                                  rgb_mode=True,
-                                                 name=batch_idx)
-
+                                                 name=batch_idx,
+                                                 audio_array=batch['raw_audio'])
 
     def test_step_old(self, batch, batch_idx):
         audio = batch['raw_audio']
