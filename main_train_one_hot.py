@@ -54,16 +54,13 @@ def parse_config():
 config = parse_config()
 
 ## Create model
-model = get_model(config['model_name'], config)
+model = get_model(config.model_name, config)
 
-if config.checkpoint is None:
-    print(f"[WARNING] Train from scratch!")
-else:
-    print(f"[WARNING] Load pretrained model from {config.checkpoint}")
-    model = model.load_from_checkpoint(config.checkpoint, config=config)
-
-if not config['test_mode']:
+if not config.test_mode:
     print(f"{'='*25} Start Traning, Good Luck! {'='*25}")
+    
+    if config.checkpoint is None:
+        print(f"[WARNING] Train from scratch!")
 
     ## ======================= Training ======================= ##
     ## 1) Define the dataloader
@@ -76,13 +73,16 @@ if not config['test_mode']:
     ## 2) Start training
     trainer = pl.Trainer(gpus=1,
                          default_root_dir=config['log_dir'],
-                         **config['Trainer'])
+                         **config.Trainer)
     
     ## Resume the training state
     trainer.fit(model, train_dataloader, val_dataloader, 
                 ckpt_path=config.checkpoint)
 else:
     print(f"{'='*25} Start Testing, Good Luck! {'='*25}")
+
+    print(f"[INFO] Load pretrained model from {config.checkpoint} for testing...")
+    model = model.load_from_checkpoint(config.checkpoint, config=config)
 
     # test_dataloader = get_3dmm_dataset(config['dataset'], split="voca_test", shuffle=False)
     test_dataloader = get_test_dataset(config['dataset'])

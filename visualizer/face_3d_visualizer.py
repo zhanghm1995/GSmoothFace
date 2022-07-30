@@ -74,16 +74,27 @@ class Face3DMMRenderer(object):
 
         ## Start rendering
         self.renderer(face_params, None)
-        vis_image = self.renderer.compute_rendered_image() # (B, 3, H, W)
+        vis_image = self.renderer.compute_rendered_image() # (B, H, W, 3)
 
         ## Rescale the image to original size
         if transform_params is not None:
-            vis_image = rescale_mask_V2(vis_image, transform_params)
+            ## TODO: cannot apply in batch processing currently
+            trans_img = []
+            for i in range(vis_image.shape[0]):
+                img = vis_image[i]
+                trans_vec = transform_params[i]
+
+                tmp_img = rescale_mask_V2(img, trans_vec)
+                trans_img.append(tmp_img)
+            
+            vis_image = np.stack(trans_img)
         
         ## Save video
         if need_save and output_dir is not None:
-            vis_image = rearrange(vis_image, '(b t) c h w -> b t c h w', b=b)
+            vis_image = rearrange(vis_image, '(b t) h w c -> b t h w c', b=b)
             save_image_array_to_video(vis_image, output_dir, name, rgb_mode=rgb_mode, audio_array=audio_array)
+        
+        return vis_image
 
 
 class Face3DMMVisualizer(object):
