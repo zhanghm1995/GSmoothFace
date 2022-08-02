@@ -34,22 +34,36 @@ class BaseVideoDataset(Dataset):
     Args:
         Dataset (_type_): _description_
     """
-    def __init__(self, split, **kwargs) -> None:
+    def __init__(
+        self, 
+        data_root,
+        split,
+        fetch_length: int = 75,
+        fetch_stride: int = 75,
+        video_fps: int = 25,
+        audio_sample_rate: int = 16000,
+        target_image_size: int = 192,
+        **kwargs) -> None:
         super().__init__()
-        
 
-        self.data_root = kwargs['data_root']
+        self.data_root = data_root
         
         flag = osp.exists(self.data_root)
         assert flag, f"{self.data_root} is not exist, please check!"
+        
+        if osp.isfile(split):
+            split_fp = split
+        else:
+            split_fp = osp.join(self.data_root, f'{split}.txt')
+        self.all_videos_dir = open(split_fp).read().splitlines()
+        
+        print(f"There are {len(self.all_videos_dir)} videos")
 
-        self.all_videos_dir = open(osp.join(self.data_root, f'{split}.txt')).read().splitlines()
-
-        self.fetch_length = kwargs.get("fetch_length", 75)
-        self.fetch_stride = kwargs.get("fetch_stride", 50)
-        self.video_fps = kwargs.get("video_fps", 25)
-        self.audio_sample_rate = kwargs.get("audio_sample_rate", 16000)
-        self.target_image_size = kwargs.get("target_image_size", 192)
+        self.fetch_length = fetch_length
+        self.fetch_stride = fetch_stride
+        self.video_fps = video_fps
+        self.audio_sample_rate = audio_sample_rate
+        self.target_image_size = target_image_size
 
         self.build_dataset()
 

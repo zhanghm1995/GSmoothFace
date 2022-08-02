@@ -44,5 +44,15 @@ def test_2d_3d_dataset():
     #     print(dataset["video_name"])
 
 
+def test_Face3DMMOneHotDataset():
+    from dataset.face_3dmm_one_hot_dataset import Face3DMMOneHotDataset
+
+    data_root = "./data/HDTF_preprocessed"
+    split = "./train.txt"
+    
+    dataset = Face3DMMOneHotDataset(data_root, split)
+    print(len(dataset))
+
+
 if __name__ == "__main__":
-    test_2d_3d_dataset()
+    test_Face3DMMOneHotDataset()

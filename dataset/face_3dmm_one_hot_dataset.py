@@ -17,7 +17,7 @@ from scipy.io import loadmat
 from transformers import Wav2Vec2Processor
 from .base_video_dataset import BaseVideoDataset
 from .basic_bfm import BFMModel
-
+from .face_3dmm_utils import get_face_3d_params
 
 def _todict(matobj):
     '''
@@ -56,12 +56,12 @@ def loadmat2(filename):
 
 
 class Face3DMMOneHotDataset(BaseVideoDataset):
-    def __init__(self, split, **kwargs) -> None:
-        super(Face3DMMOneHotDataset, self).__init__(split, **kwargs)
+    def __init__(self, data_root, split, **kwargs) -> None:
+        super(Face3DMMOneHotDataset, self).__init__(data_root, split, **kwargs)
         self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         
-        # self.one_hot_labels = np.eye(len(self.all_videos_dir))
-        self.one_hot_labels = np.eye(8)
+        self.one_hot_labels = np.eye(len(self.all_videos_dir))
+        # self.one_hot_labels = np.eye(8)
 
         self.facemodel = BFMModel("./data/BFM/BFM_model_front.mat")
         
@@ -150,7 +150,9 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         data_dict['raw_audio'] = torch.tensor(audio_seq.astype(np.float32)) #(L, )
 
         ## Get the GT 3D face parameters
-        face_3d_params_dict = self._get_face_3d_params(choose_video, start_idx, need_origin_params=True)
+        # face_3d_params_dict = self._get_face_3d_params(choose_video, start_idx, need_origin_params=True)
+        face_3d_params_dict = get_face_3d_params(self.data_root, choose_video, start_idx, need_origin_params=True, 
+                                                 fetch_length=self.fetch_length)
         data_dict.update(face_3d_params_dict)
 
         gt_face_3d_params_arr = face_3d_params_dict['gt_face_3d_params']
