@@ -105,7 +105,7 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         # ## Logging
         # self.log('val/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
         
-        if batch_idx % 2 != 0:
+        if batch_idx % 100 != 0:
             return
 
         ## Visualization

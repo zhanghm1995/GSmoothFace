@@ -12,6 +12,7 @@ from dataset import get_dataset
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
+import time
 
 
 def test_2d_3d_dataset():
@@ -57,6 +58,12 @@ def test_Face3DMMOneHotDataset():
     print(item['one_hot'].shape)
     print(item['face_vertex'].shape)
     print(item['template'].shape)
+
+    start = time.time()
+    for i in tqdm(range(100)):
+        item = dataset[i]
+    end = time.time()
+    print(f"{end - start} seconds", f"average time is {(end - start) / 100}")
 
 
 if __name__ == "__main__":

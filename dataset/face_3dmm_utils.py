@@ -103,11 +103,11 @@ def get_face_3d_params(
         
         face_3d_params_list.append(face_3d_params)
 
-        trans_matrix_list.append(loadmat2(face_3d_params_path)['transform_params'])
+        # trans_matrix_list.append(loadmat2(face_3d_params_path)['transform_params'])
 
     res_dict = dict()
     
-    res_dict['gt_face_3d_params'] = np.concatenate(face_3d_params_list, axis=0) # (T, 64)
+    res_dict['gt_face_3d_params'] = torch.FloatTensor(np.concatenate(face_3d_params_list, axis=0)) # (T, 64)
     # res_dict['trans_matrix'] = torch.FloatTensor(np.concatenate(trans_matrix_list, axis=0))
     
     if need_origin_params:

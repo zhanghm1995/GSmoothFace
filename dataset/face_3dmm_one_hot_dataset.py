@@ -10,49 +10,13 @@ Description: The dataset to get one-hot vector like official FaceFormer
 
 import os.path as osp
 import numpy as np
-import scipy.io as spio
 import torch
-from torch.utils.data import Dataset
-from scipy.io import loadmat
 from transformers import Wav2Vec2Processor
+import time
+
 from .base_video_dataset import BaseVideoDataset
-from .basic_bfm import BFMModel
+from .basic_bfm import BFMModel, BFMModelPyTorch
 from .face_3dmm_utils import get_face_3d_params
-
-def _todict(matobj):
-    '''
-    A recursive function which constructs from matobjects nested dictionaries
-    '''
-    dict = {}
-    for strg in matobj._fieldnames:
-        elem = matobj.__dict__[strg]
-        if isinstance(elem, spio.matlab.mio5_params.mat_struct):
-            dict[strg] = _todict(elem)
-        else:
-            dict[strg] = elem
-    return dict
-
-
-def _check_keys(dict):
-    '''
-    checks if entries in dictionary are mat-objects. If yes
-    todict is called to change them to nested dictionaries
-    '''
-    for key in dict:
-        if isinstance(dict[key], spio.matlab.mio5_params.mat_struct):
-            dict[key] = _todict(dict[key])
-    return dict
-
-
-def loadmat2(filename):
-    '''
-    this function should be called instead of direct spio.loadmat
-    as it cures the problem of not properly recovering python dictionaries
-    from mat files. It calls the function check keys to cure all entries
-    which are still mat-objects
-    '''
-    data = spio.loadmat(filename, struct_as_record=False, squeeze_me=True)
-    return _check_keys(data)
 
 
 class Face3DMMOneHotDataset(BaseVideoDataset):
@@ -63,68 +27,10 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         self.one_hot_labels = np.eye(len(self.all_videos_dir))
         # self.one_hot_labels = np.eye(8)
 
-        self.facemodel = BFMModel("./data/BFM/BFM_model_front.mat")
+        self.facemodel = BFMModelPyTorch("./data/BFM/BFM_model_front.mat")
 
         self.use_template_face = False
         
-    def _get_mat_vector(self, face_params_dict,
-                        keys_list=['id', 'exp', 'tex', 'angle', 'gamma', 'trans']):
-        """Get coefficient vector from Deep3DFace_Pytorch results
-
-        Args:
-            face_params_dict (dict): face params dictionary loaded by using loadmat function
-
-        Returns:
-            np.ndarray: (1, L)
-        """
-
-        coeff_list = []
-        for key in keys_list:
-            coeff_list.append(face_params_dict[key])
-        
-        coeff_res = np.concatenate(coeff_list, axis=1)
-        return coeff_res
-
-    def _get_face_3d_params(self, video_dir, start_idx, need_origin_params=False):
-        """Get face 3d params from a video and specified start index
-
-        Args:
-            video_dir (str): video name
-            start_idx (int): start index
-
-        Returns:
-            np.ndarray: (L, C), L is the fetch length, C is the needed face parameters dimension
-        """
-        face_3d_params_list, face_origin_3d_params_list = [], []
-        trans_matrix_list = []
-        for idx in range(start_idx, start_idx + self.fetch_length):
-            face_3d_params_path = osp.join(self.data_root, video_dir, "deep3dface", f"{idx:06d}.mat")
-            
-            face_3d_params_dict = loadmat(face_3d_params_path) # dict type
-
-            if need_origin_params:
-                face_origin_3d_params = self._get_mat_vector(face_3d_params_dict) # (1, 257)
-                face_3d_params = face_origin_3d_params[:, 80:144]
-
-                face_origin_3d_params_list.append(face_origin_3d_params)
-            else:
-                face_3d_params = self._get_mat_vector(face_3d_params_dict, keys_list=["exp"])
-            
-            face_3d_params_list.append(face_3d_params)
-
-            trans_matrix_list.append(loadmat2(face_3d_params_path)['transform_params'])
-
-        res_dict = dict()
-        
-        res_dict['gt_face_3d_params'] = np.concatenate(face_3d_params_list, axis=0) # (T, 64)
-        # res_dict['trans_matrix'] = torch.FloatTensor(np.concatenate(trans_matrix_list, axis=0))
-        
-        if need_origin_params:
-            # (T, 257)
-            res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
-
-        return res_dict
-
     def _get_template(self, choose_video):
         ## Assume the first frame is the template face
         video_path = osp.join(self.data_root, choose_video)
@@ -153,7 +59,8 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
 
         ## Get the GT 3D face parameters
         # face_3d_params_dict = self._get_face_3d_params(choose_video, start_idx, need_origin_params=True)
-        face_3d_params_dict = get_face_3d_params(self.data_root, choose_video, start_idx, need_origin_params=True, 
+        face_3d_params_dict = get_face_3d_params(self.data_root, choose_video, start_idx, 
+                                                 need_origin_params=True, 
                                                  fetch_length=self.fetch_length)
         data_dict.update(face_3d_params_dict)
 
@@ -172,14 +79,14 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         else:
             origin_id_coeffs = face_3d_params_dict['gt_face_origin_3d_params'][:, :80]
             template_face = self.facemodel.compute_shape(
-                id_coeff=origin_id_coeffs.numpy(), exp_coeff=None) # (T, 3N)
-            
+                id_coeff=origin_id_coeffs, exp_coeff=None) # (T, 3N)
+
             gt_face_3d_vertex = self.facemodel.compute_shape(
-                id_coeff=origin_id_coeffs.numpy(), exp_coeff=gt_face_3d_params_arr)
-            data_dict['template'] = torch.FloatTensor(template_face)
-            data_dict['face_vertex'] = torch.FloatTensor(gt_face_3d_vertex)
+                id_coeff=origin_id_coeffs, exp_coeff=gt_face_3d_params_arr)
+            
+            data_dict['template'] = template_face
+            data_dict['face_vertex'] = gt_face_3d_vertex
         
-        data_dict['gt_face_3d_params'] = torch.from_numpy(gt_face_3d_params_arr.astype(np.float32)) # (fetch_length, 64)
         data_dict['one_hot'] = torch.FloatTensor(one_hot)
         data_dict['video_name']  = choose_video
         data_dict['exp_base'] = torch.FloatTensor(self.facemodel.exp_base)
