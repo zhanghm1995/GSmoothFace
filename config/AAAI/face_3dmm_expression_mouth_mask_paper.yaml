@@ -28,8 +28,9 @@ dataset:
   batch_size: 1
   number_workers: 6
 
-  audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
-  video_name: train/WDA_KimSchrier_000
+  # audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
+  audio_path: data/audio_samples/Silence.wav
+  video_name: train/WDA_ChrisMurphy0_000
   training_split: train
 
 teacher_forcing: False

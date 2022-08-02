@@ -61,8 +61,14 @@ def _todict(matobj):
 
 
 class Face3DMMRenderer(object):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        need_pose: bool = False) -> None:
+        
         opt = EasyDict(center=112.0, focal=1015.0, z_near=5.0, z_far=15.0)
+        if not need_pose:
+            opt.center = 256.0
+        
         self.renderer = MyMeshRender(opt)
     
     def render_3dmm_face(self, face_params, transform_params=None, need_save=True,

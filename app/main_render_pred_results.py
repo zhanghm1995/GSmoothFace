@@ -7,6 +7,9 @@ Email: haimingzhang@link.cuhk.edu.cn
 Description: The main script to rendering the FaceFormer 3DMM prediction
 '''
 
+import sys
+sys.path.append('.')
+sys.path.append('../')
 from PIL import Image
 import numpy as np
 from glob import glob
@@ -14,10 +17,13 @@ import os
 import os.path as osp
 from tqdm import tqdm
 from scipy.io import loadmat, savemat
-from face_3d_params_utils import get_coeff_vector
 import cv2
 import subprocess
 import argparse
+import torch
+from easydict import EasyDict
+from visualizer.face_3d_params_utils import get_coeff_vector
+from visualizer import render_utils
 
 
 def parse_args():
@@ -120,10 +126,6 @@ def vis_rendered_face_list(args, data_root: str, output_root=None, need_pose=Tru
         data_root (str): matrix file directory path
         output_root (str, optional): directory for saving rendered results. Defaults to None.
     """
-    import torch
-    import render_utils
-    from easydict import EasyDict
-
     assert osp.exists(data_root), f'{data_root} does not exist.'
 
     if need_pose:

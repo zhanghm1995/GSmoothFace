@@ -71,6 +71,7 @@ class Face3DMMTestDataset(Dataset):
         self.audio_path = audio_path
         self.video_name = video_name # current testing conditional speaker
         self.video_fps = video_fps
+        self.audio_sample_rate = audio_sample_rate
 
         training_split_names = open(osp.join(self.data_root, f'{training_split}.txt')).read().splitlines()
 
@@ -78,7 +79,9 @@ class Face3DMMTestDataset(Dataset):
         self.one_hot_labels = np.eye(len(training_split_names))
         self.one_hot_idx = training_split_names.index(self.video_name)
 
-        self.audio_sample_rate = audio_sample_rate
+        ## Get the video GT face parameters for visualization
+        curr_deep3dface_dir = osp.join(self.data_root, self.video_name, "deep3dface")
+        self.face_3dmm_mat_list = sorted(glob(osp.join(curr_deep3dface_dir, "*.mat")))
 
         self.target_image_size = (192, 192)
 
@@ -131,7 +134,6 @@ class Face3DMMTestDataset(Dataset):
         return len(self.audio_chunks)
     
     def _get_template(self, choose_video):
-        ## Assume the first frame is the template face
         video_path = osp.join(self.data_root, choose_video)
 
         template_face = np.load(osp.join(video_path, "template_face.npy"))

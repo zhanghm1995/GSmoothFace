@@ -8,7 +8,6 @@ Description: The utilities to render the 3DMM face
 '''
 
 import numpy as np
-from numpy.lib.npyio import save
 import torch
 from torch import Tensor
 import trimesh

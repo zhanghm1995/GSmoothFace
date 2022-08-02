@@ -7,16 +7,6 @@ Email: haimingzhang@link.cuhk.edu.cn
 Description: Base dataset class for loading video dataset sequence
 '''
 
-
-'''
-Copyright (c) 2022 by Haiming Zhang. All Rights Reserved.
-
-Author: Haiming Zhang
-Date: 2022-02-21 19:14:47
-Email: haimingzhang@link.cuhk.edu.cn
-Description: Wav2Lip dataset loader
-'''
-
 import os
 import os.path as osp
 from typing import List

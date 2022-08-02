@@ -148,6 +148,10 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
                                                  name=batch_idx,
                                                  audio_array=batch['raw_audio'])
 
+        ## Save the prediction to npy file
+        model_output = model_output.squeeze().detach().cpu().numpy()
+        np.save(osp.join(save_dir, f"{batch_idx}.npy"), model_output)
+
     def test_step_old(self, batch, batch_idx):
         audio = batch['raw_audio']
         video_name = batch['video_name'][0]
