@@ -64,6 +64,8 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         # self.one_hot_labels = np.eye(8)
 
         self.facemodel = BFMModel("./data/BFM/BFM_model_front.mat")
+
+        self.use_template_face = False
         
     def _get_mat_vector(self, face_params_dict,
                         keys_list=['id', 'exp', 'tex', 'angle', 'gamma', 'trans']):
@@ -157,19 +159,28 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
 
         gt_face_3d_params_arr = face_3d_params_dict['gt_face_3d_params']
 
-        ## Get the template info
-        template_face, id_coeff = self._get_template(choose_video)
+        if self.use_template_face:
+            ## Get the template info
+            template_face, id_coeff = self._get_template(choose_video)
 
-        ## Get the GT 3D face vertex ()
-        gt_face_3d_vertex = self.facemodel.compute_shape(
-            id_coeff=id_coeff, exp_coeff=gt_face_3d_params_arr)
+            ## Get the GT 3D face vertex (T, 3N)
+            gt_face_3d_vertex = self.facemodel.compute_shape(
+                id_coeff=id_coeff, exp_coeff=gt_face_3d_params_arr)
+            
+            data_dict['template'] = torch.FloatTensor(template_face.reshape((-1))) # (N,)
+            data_dict['face_vertex'] = torch.FloatTensor(gt_face_3d_vertex)
+        else:
+            origin_id_coeffs = face_3d_params_dict['gt_face_origin_3d_params'][:, :80]
+            template_face = self.facemodel.compute_shape(
+                id_coeff=origin_id_coeffs.numpy(), exp_coeff=None) # (T, 3N)
+            
+            gt_face_3d_vertex = self.facemodel.compute_shape(
+                id_coeff=origin_id_coeffs.numpy(), exp_coeff=gt_face_3d_params_arr)
+            data_dict['template'] = torch.FloatTensor(template_face)
+            data_dict['face_vertex'] = torch.FloatTensor(gt_face_3d_vertex)
         
         data_dict['gt_face_3d_params'] = torch.from_numpy(gt_face_3d_params_arr.astype(np.float32)) # (fetch_length, 64)
         data_dict['one_hot'] = torch.FloatTensor(one_hot)
-        data_dict['template'] = torch.FloatTensor(template_face.reshape((-1))) # (N,)
-        data_dict['face_vertex'] = torch.FloatTensor(gt_face_3d_vertex)
         data_dict['video_name']  = choose_video
         data_dict['exp_base'] = torch.FloatTensor(self.facemodel.exp_base)
         return data_dict
-
-

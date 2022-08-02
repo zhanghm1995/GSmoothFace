@@ -53,6 +53,11 @@ def test_Face3DMMOneHotDataset():
     dataset = Face3DMMOneHotDataset(data_root, split)
     print(len(dataset))
 
+    item = dataset[0]
+    print(item['one_hot'].shape)
+    print(item['face_vertex'].shape)
+    print(item['template'].shape)
+
 
 if __name__ == "__main__":
     test_Face3DMMOneHotDataset()
