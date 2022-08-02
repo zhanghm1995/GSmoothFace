@@ -64,10 +64,10 @@ if not config.test_mode:
 
     ## ======================= Training ======================= ##
     ## 1) Define the dataloader
-    train_dataloader = get_3dmm_dataset(config['dataset'], split="train", shuffle=True)
+    train_dataloader = get_3dmm_dataset(config.dataset.train, shuffle=True)
     print(f"The training dataloader length is {len(train_dataloader)}")
 
-    val_dataloader = get_3dmm_dataset(config['dataset'], split="val", shuffle=False)
+    val_dataloader = get_3dmm_dataset(config.dataset.validation, shuffle=False)
     print(f"The validation dataloader length is {len(val_dataloader)}")
 
     ## 2) Start training
