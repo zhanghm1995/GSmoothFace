@@ -115,11 +115,12 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         face3dmm_params = batch['gt_face_origin_3d_params']
         face3dmm_params[:, :, 80:144] = model_output
 
-        save_dir = osp.join(self.logger.log_dir, "results/val", f"epoch_{self.current_epoch}")
+        save_dir = osp.join(self.logger.log_dir, "results/val", f"epoch_{self.current_epoch:03d}")
         self.face_3dmm_renderer.render_3dmm_face(face3dmm_params, 
                                                  output_dir=save_dir,
                                                  rgb_mode=True,
-                                                 name=batch_idx)
+                                                 name=batch_idx,
+                                                 audio_array=batch['raw_audio'])
 
     def predict(self, batch, batch_idx):
         model_output = self.model.predict(batch)

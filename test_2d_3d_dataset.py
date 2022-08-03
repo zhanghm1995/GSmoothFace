@@ -51,7 +51,7 @@ def test_Face3DMMOneHotDataset():
     data_root = "./data/HDTF_preprocessed"
     split = "./train.txt"
     
-    dataset = Face3DMMOneHotDataset(data_root, split)
+    dataset = Face3DMMOneHotDataset(data_root, split, fetch_length=100)
     print(len(dataset))
 
     item = dataset[0]
