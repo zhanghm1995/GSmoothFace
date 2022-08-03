@@ -1,3 +1,5 @@
+exp_name: female_audio
+
 checkpoint_dir: work_dir/demo
 test_mode: True
 
@@ -21,10 +23,13 @@ dataset:
   fetch_stride: 600
   # audio_path: /home/haimingzhang/Research/Programming/cv-fighter/Cheat-Sheet-For-FFmpeg/data/remember_me.wav
   # audio_path: data/HDTF_preprocessed/WRA_JoniErnst1_000/WRA_JoniErnst1_000.wav
-  audio_path: data/HDTF_face3dmmformer/val/WRA_KellyAyotte_000/WRA_KellyAyotte_000.wav
+  audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
   video_name: train/WDA_KimSchrier_000
-  training_split: small_train
+  training_split: train
   number_workers: 6
+
+visualizer:
+  deep3dface_dir: ./data/HDTF_face3dmmformer/train/WDA_KimSchrier_000/deep3dface
 
 teacher_forcing: false
 

@@ -1,15 +1,11 @@
-## Face3DMMFormer
-
-## Environment
-
-- Ubuntu 18.04.1
-- Python 3.6 or 3.7
-- Pytorch 1.10.0
+## TalkingFaceFormer
 
 ## Dependencies
-
+Python 3.6
 - Check the required python packages in `requirements.txt`.
 - ffmpeg
+
+For visualization, you need to install the [nvdiffrast](https://nvlabs.github.io/nvdiffrast/) package, please check the link to compile and install it in your python environment.
 
 ## Demo
 
@@ -20,22 +16,11 @@ First of all, please prepare the driven audio you want to test and place them in
 Run the following command in the terminal. And before run the demo, please change the `--checkpoint_dir` in the script to specify the path of saved results.
 
 ```bash
-bash main_train_one_test.sh
+bash demo.sh
 ```
 
-### Visualize the results
-After the demo, you can see the results in your specified `--checkpoint_dir` folder. And then you can visualize the results by the following command.
+**Note**: if you want to visualize the generated results, you need to specify the `deep3dface_dir` path in the `demo.yaml` file. The visualization results will be save in `work_dir/demo/lightning_logs/version_*/vis/train/*` by default.
 
-```bash
-cd visualizer
-bash main_render_pred_results.sh
-```
-Also, you should change the `generated_vertex_path` argument in the script to specify the path of `npy` file of the generated vertex, and other arguments meanings are explained as follows:
-```bash
---video_name : the name of the testing video, will rendering the face of this person.
---generated_vertex_path : the path of the generated vertex file.
---output_path : the save path of the output rendering images.
-```
 
 ### Generate the video
 After getting the rendered images, you can generate the video by the following command.
@@ -47,6 +32,5 @@ And pay attention to the corresponding audio file is placed in the rendered imag
 
 ## Acknowledgement
 
-We gratefully acknowledge someone.
-
+We gratefully acknowledge the FaceFormer, Deep3DFace_pytorch, etc. open source projects.
 

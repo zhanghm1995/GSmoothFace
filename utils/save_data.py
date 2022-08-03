@@ -12,6 +12,7 @@ import tempfile
 import cv2
 import subprocess
 from tqdm import tqdm
+import torch
 from .utils import tensor2im
 from scipy.io import wavfile
 
@@ -34,8 +35,8 @@ def save_video(image, output_video_fname, image_size=512,
     print("Save video done!")
 
 
-def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
-                              need_change_channel_order=False,
+def save_image_array_to_video(image_array, output_dir, name=None, 
+                              fps=25, rgb_mode=False, 
                               audio_array=None, audio_sample_rate=16000):
     """Save the image array into video
 
@@ -44,24 +45,29 @@ def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
         output_dir (_type_): _description_
         name (_type_, optional): _description_. Defaults to None.
         fps (int, optional): _description_. Defaults to 25.
-        audio_array (_type_, optional): _description_. Defaults to None.
+        audio_array (np.ndarray|Tensor): (B, L). Defaults to None.
         audio_sample_rate (int, optional): _description_. Defaults to 16000.
     """
     
     os.makedirs(output_dir, exist_ok=True)
 
+    if torch.is_tensor(audio_array):
+        audio_array = audio_array.cpu().numpy()
+
     for i in range(image_array.shape[0]):
         tmp_video_file = tempfile.NamedTemporaryFile('w', suffix='.mp4', dir=output_dir)
         for frame in range(image_array.shape[1]):
             image_numpy = tensor2im(image_array[i][frame])
-            if need_change_channel_order:
+
+            if rgb_mode:
                 image_numpy = image_numpy[..., ::-1]
             
             if frame == 0:
-                img_shape = image_numpy.shape[:2]
+                ## Create the video writer
+                img_shape = image_numpy.shape[:2] # (H, W)
                 writer = cv2.VideoWriter(tmp_video_file.name, 
                                          cv2.VideoWriter_fourcc(*'mp4v'), 
-                                         fps, img_shape, True)
+                                         fps, img_shape[::-1], True)
             writer.write(image_numpy)
         
         writer.release()
@@ -74,14 +80,13 @@ def save_image_array_to_video(image_array, output_dir, name=None, fps=25,
         ## Combine the audio
         if audio_array is not None:
             tmp_audio_file = tempfile.NamedTemporaryFile('w', suffix='.wav', dir=output_dir)
-            audio_data = audio_array[i].cpu().numpy()
+            audio_data = audio_array[i]
             wavfile.write(tmp_audio_file.name, audio_sample_rate, audio_data)
 
-            cmd = f'/usr/bin/ffmpeg -y -i {tmp_audio_file.name} -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
+            cmd = f'ffmpeg -y -i {tmp_audio_file.name} -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
         else:
-            cmd = f'/usr/bin/ffmpeg -y -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
-        subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # subprocess.call(cmd, shell=True)
+            cmd = f'ffmpeg -y -i {tmp_video_file.name} -vcodec h264 -ac 2 -channel_layout stereo -pix_fmt yuv420p {output_video_fname}'
+        flag = subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def save_images(image_tensor, save_dir, epoch, global_step=None, name=None):

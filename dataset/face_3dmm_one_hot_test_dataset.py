@@ -55,22 +55,33 @@ def get_frames_from_video(video_path, num_need_frames=-1):
 
 
 class Face3DMMTestDataset(Dataset):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self, 
+        data_root,
+        audio_path,
+        video_name,
+        training_split,
+        fetch_length: int = 75,
+        audio_sample_rate: int = 16000,
+        video_fps: int = 25,
+        **kwargs) -> None:
         super().__init__()
 
-        self.data_root = kwargs['data_root']
-        self.audio_path = kwargs['audio_path']
-        self.video_path = kwargs.get('video_path', None)
-        self.video_name = kwargs['video_name'] # current testing conditional speaker
-        training_split = kwargs['training_split']
+        self.data_root = data_root
+        self.audio_path = audio_path
+        self.video_name = video_name # current testing conditional speaker
+        self.video_fps = video_fps
+        self.audio_sample_rate = audio_sample_rate
 
         training_split_names = open(osp.join(self.data_root, f'{training_split}.txt')).read().splitlines()
 
-        self.fetch_length = kwargs.get("fetch_length", 75)
+        self.fetch_length = fetch_length
         self.one_hot_labels = np.eye(len(training_split_names))
         self.one_hot_idx = training_split_names.index(self.video_name)
 
-        self.audio_sample_rate = 16000
+        ## Get the video GT face parameters for visualization
+        curr_deep3dface_dir = osp.join(self.data_root, self.video_name, "deep3dface")
+        self.face_3dmm_mat_list = sorted(glob(osp.join(curr_deep3dface_dir, "*.mat")))
 
         self.target_image_size = (192, 192)
 
@@ -88,7 +99,7 @@ class Face3DMMTestDataset(Dataset):
         ## 1)  Read the audio data
         self.driven_audio_data, _ = librosa.load(self.audio_path, sr=self.audio_sample_rate)
 
-        self.audio_stride = round(self.audio_sample_rate * self.fetch_length / 25)
+        self.audio_stride = round(self.audio_sample_rate * self.fetch_length / self.video_fps)
         if self.audio_stride >= len(self.driven_audio_data):
             self.audio_chunks =[0]
         else:
@@ -123,7 +134,6 @@ class Face3DMMTestDataset(Dataset):
         return len(self.audio_chunks)
     
     def _get_template(self, choose_video):
-        ## Assume the first frame is the template face
         video_path = osp.join(self.data_root, choose_video)
 
         template_face = np.load(osp.join(video_path, "template_face.npy"))
@@ -139,9 +149,9 @@ class Face3DMMTestDataset(Dataset):
         audio_seq = self.driven_audio_data[audio_start_idx: audio_start_idx + self.audio_stride]
 
         ## Extract the audio features
-        audio_seq = np.squeeze(self.audio_processor(audio_seq, sampling_rate=16000).input_values)
+        audio_seq = np.squeeze(self.audio_processor(audio_seq, sampling_rate=self.audio_sample_rate).input_values)
 
-        actual_frame_lenth = int(len(audio_seq) / 16000 * 25)
+        actual_frame_lenth = int(len(audio_seq) / self.audio_sample_rate * self.video_fps)
 
         ## Get the template info
         template_face, id_coeff = self._get_template(self.video_name)

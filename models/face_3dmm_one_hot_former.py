@@ -96,7 +96,7 @@ class Face3DMMOneHotFormer(nn.Module):
         # motion decoder
         self.vertice_map_r = nn.Linear(args.feature_dim, args.vertice_dim)
         # style embedding
-        self.obj_vector = nn.Linear(8, args.feature_dim, bias=False)
+        self.obj_vector = nn.Linear(341, args.feature_dim, bias=False)
         # self.device = args.device
         nn.init.constant_(self.vertice_map_r.weight, 0)
         nn.init.constant_(self.vertice_map_r.bias, 0)
@@ -118,7 +118,7 @@ class Face3DMMOneHotFormer(nn.Module):
         device = audio.device
         # tgt_mask: :math:`(T, T)`.
         # memory_mask: :math:`(T, S)`.
-        template = template.unsqueeze(1) # (1,1, V*3)
+        # template = template.unsqueeze(1) # (1,1, V*3)
         obj_embedding = self.obj_vector(one_hot)#(1, feature_dim)
         frame_num = vertice.shape[1]
         hidden_states = self.audio_encoder(audio, self.dataset, frame_num=frame_num).last_hidden_state

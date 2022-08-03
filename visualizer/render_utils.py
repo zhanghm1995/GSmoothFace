@@ -8,13 +8,12 @@ Description: The utilities to render the 3DMM face
 '''
 
 import numpy as np
-from numpy.lib.npyio import save
 import torch
 from torch import Tensor
 import trimesh
 
-from nvdiffrast_utils import MeshRenderer
-from bfm import ParametricFaceModel
+from .nvdiffrast_utils import MeshRenderer
+from .bfm import ParametricFaceModel
 
 
 class MyMeshRender(object):

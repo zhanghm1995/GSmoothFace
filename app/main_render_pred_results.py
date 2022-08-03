@@ -7,6 +7,9 @@ Email: haimingzhang@link.cuhk.edu.cn
 Description: The main script to rendering the FaceFormer 3DMM prediction
 '''
 
+import sys
+sys.path.append('.')
+sys.path.append('../')
 from PIL import Image
 import numpy as np
 from glob import glob
@@ -14,10 +17,13 @@ import os
 import os.path as osp
 from tqdm import tqdm
 from scipy.io import loadmat, savemat
-from face_3d_params_utils import get_coeff_vector
 import cv2
 import subprocess
 import argparse
+import torch
+from easydict import EasyDict
+from visualizer.face_3d_params_utils import get_coeff_vector
+from visualizer import render_utils
 
 
 def parse_args():
@@ -48,74 +54,6 @@ def get_masked_region(mask_img):
 
     contour = get_contour(thresh)
     return contour
-
-
-def rescale_mask(scaled_mask: np.array, transform_params: list) -> np.array:
-    """
-    Uncrops and rescales (i.e., resizes) the given scaled and cropped mask back to the
-    resolution of the original image using the given transformation parameters.
-    """
-    
-    # Parse transform params.
-    original_image_width, original_image_height = transform_params[0:2]
-    s = transform_params[2]  # the scaling parameter
-    s = (s / 102.0) ** -1
-    t = transform_params[3:].astype(np.float)  # some parameters for transformation
-    t = [elem.item() for elem in t]
-        
-    # Repeat the computations for downscaling from preprocess_img.py/process_img() to get
-    # the parameters needed for uncropping and rescaling the mask.
-    
-    # Get the width and height of the original image after downscaling.
-    scaled_image_width = np.array((original_image_width / s*102)).astype(np.int32)  
-    scaled_image_height = np.array((original_image_height / s*102)).astype(np.int32)
-    
-    scaled_mask_size = scaled_mask.shape[0]  # e.g. 224, NB. a scaled and cropped mask always has a square shape
-    
-    # Get an x or y coordinate for all sides (borders) of the mask.
-    left_side_x = (scaled_image_width/2 - scaled_mask_size/2 + float((t[0] - original_image_width/2)*102/s)).astype(np.int32)
-    right_side_x = left_side_x + scaled_mask_size
-    upper_side_y = (scaled_image_height/2 - scaled_mask_size/2 + float((original_image_height/2 - t[1])*102/s)).astype(np.int32)
-    lower_side_y = upper_side_y + scaled_mask_size
-        
-    # Compute the number of black ('missing') pixels to add to all sides of the mask.
-    n_missing_pixels_left = left_side_x
-    n_missing_pixels_right = scaled_image_width - right_side_x
-    n_missing_pixels_top = upper_side_y
-    n_missing_pixels_bottom = scaled_image_height - lower_side_y
-
-    # Define np.arrays with the needed number of black pixels.
-    if n_missing_pixels_left < 0:
-        black_pixels_left = np.zeros(shape=(scaled_mask_size, 0, 3), dtype='uint8')
-        scaled_mask = scaled_mask[:, -n_missing_pixels_left:]
-    else:
-        black_pixels_left = np.zeros(shape=(scaled_mask_size, n_missing_pixels_left, 3), dtype='uint8')
-
-    if n_missing_pixels_right < 0:
-        tmp = np.hstack([black_pixels_left, scaled_mask[:, :n_missing_pixels_right]])
-        # tmp = np.hstack([black_pixels_left, scaled_mask])[:, :n_missing_pixels_right]
-    else:
-        black_pixels_right = np.zeros(shape=(scaled_mask_size, n_missing_pixels_right, 3), dtype='uint8')
-        tmp = np.hstack([black_pixels_left, scaled_mask, black_pixels_right])
-
-    if n_missing_pixels_top >= 0:
-        black_pixels_top = np.zeros(shape=(n_missing_pixels_top, scaled_image_width, 3), dtype='uint8')
-    else:
-        black_pixels_top = np.zeros(shape=(0, scaled_image_width, 3), dtype='uint8')
-        tmp = tmp[-n_missing_pixels_top:, :]
-
-    if n_missing_pixels_bottom >= 0:
-        black_pixels_bottom = np.zeros(shape=(n_missing_pixels_bottom, scaled_image_width, 3), dtype='uint8')
-        uncropped_mask = np.vstack([black_pixels_top, tmp, black_pixels_bottom])
-    else:
-        # uncropped_mask = np.vstack([black_pixels_top, tmp])[:n_missing_pixels_bottom, :]
-        uncropped_mask = np.vstack([black_pixels_top, tmp[:n_missing_pixels_bottom, :]])
-    
-    # Rescale (i.e., resize) the uncropped mask back to the resolution of the original image.
-    uncropped_and_rescaled_mask = Image.fromarray(uncropped_mask).resize((original_image_width, original_image_height), 
-                                                                          resample=Image.BICUBIC)
-    
-    return uncropped_and_rescaled_mask
 
 
 def rescale_mask_V2(input_mask: np.array, transform_params: list):
@@ -188,10 +126,6 @@ def vis_rendered_face_list(args, data_root: str, output_root=None, need_pose=Tru
         data_root (str): matrix file directory path
         output_root (str, optional): directory for saving rendered results. Defaults to None.
     """
-    import torch
-    import render_utils
-    from easydict import EasyDict
-
     assert osp.exists(data_root), f'{data_root} does not exist.'
 
     if need_pose:

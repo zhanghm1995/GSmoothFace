@@ -1,16 +1,19 @@
 ## Refer to the FaceFormer to predict the expression parameters
 exp_name: full_model
 
-checkpoint_dir: work_dir/demo_train
+log_dir: work_dir/AAAI/train_one_hot_3dmmformer
 test_mode: False
 
 checkpoint: null
 
-
 model_name: Face3DMMOneHotFormer
 
-max_epochs: 120
-check_val_every_n_epoch: 1
+Trainer:
+  max_epochs: 20 # 120
+  check_val_every_n_epoch: 1
+  val_check_interval: 0.5 # [0.0, 1.0]
+
+vis_step: 250
 
 lr: 0.0001
 wd: 0.0
@@ -20,10 +23,15 @@ lr_decay_rate: 0.8
 dataset:
   dataset_name: Face3DMMOneHotDataset
   data_root: ./data/HDTF_face3dmmformer
-  batch_size: 1
   fetch_length: 100
   fetch_stride: 100
+  batch_size: 1
   number_workers: 6
+
+  # audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
+  audio_path: data/audio_samples/Silence.wav
+  video_name: train/WDA_ChrisMurphy0_000
+  training_split: train
 
 teacher_forcing: False
 supervise_exp: False
