@@ -28,13 +28,6 @@ def get_3dmm_dataset(config, shuffle=None):
         dataset_name = config.dataset_name
         raise ValueError(f"{dataset_name} dataset has not been defined")
     
-    ## minibatch for debuging
-    # sub_dataset = []
-    # for idx in range(8):
-    #     sub_dataset.append(data)
-    # for idx in range(8):
-    #     sub_dataset.append(dataset[36])
-
     data_loader = DataLoader(
         dataset,
         batch_size=config['batch_size'],

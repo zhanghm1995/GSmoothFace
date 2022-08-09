@@ -52,20 +52,27 @@ def loadmat2(filename):
     return _check_keys(data)
 
 
-def get_mat_vector(face_params_dict,
-                   keys_list=['id', 'exp', 'tex', 'angle', 'gamma', 'trans']):
+def get_coeff_vector(face_params_dict, key_list=None, reset_list=None):
     """Get coefficient vector from Deep3DFace_Pytorch results
 
     Args:
-        face_params_dict (dict): face params dictionary loaded by using loadmat function
+        face_params_dict (dict): the dictionary contains reconstructed 3D face
 
     Returns:
-        np.ndarray: (1, L)
+        [np.ndarray]: 1x257
     """
+    if key_list is None:
+        keys_list = ['id', 'exp', 'tex', 'angle', 'gamma', 'trans']
+    else:
+        keys_list = key_list
 
     coeff_list = []
     for key in keys_list:
-        coeff_list.append(face_params_dict[key])
+        if reset_list is not None and key in reset_list:
+            value = np.zeros_like(face_params_dict[key])
+            coeff_list.append(value)
+        else:
+            coeff_list.append(face_params_dict[key])
     
     coeff_res = np.concatenate(coeff_list, axis=1)
     return coeff_res
@@ -94,12 +101,12 @@ def get_face_3d_params(
         face_3d_params_dict = loadmat(face_3d_params_path) # dict type
 
         if need_origin_params:
-            face_origin_3d_params = get_mat_vector(face_3d_params_dict) # (1, 257)
+            face_origin_3d_params = get_coeff_vector(face_3d_params_dict) # (1, 257)
             face_3d_params = face_origin_3d_params[:, 80:144]
 
             face_origin_3d_params_list.append(face_origin_3d_params)
         else:
-            face_3d_params = get_mat_vector(face_3d_params_dict, keys_list=["exp"])
+            face_3d_params = get_coeff_vector(face_3d_params_dict, keys_list=["exp"])
         
         face_3d_params_list.append(face_3d_params)
 
@@ -115,3 +122,18 @@ def get_face_3d_params(
         res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
 
     return res_dict
+
+
+def read_face3dmm_params(file_path, need_crop_params=False):
+    assert file_path.endswith(".mat")
+    
+    file_mat = loadmat(file_path)
+    coeff_3dmm = get_coeff_vector(file_mat)
+    
+    if need_crop_params:
+        crop_param = file_mat['transform_params']
+        _, _, ratio, t0, t1 = np.hsplit(crop_param.astype(np.float32), 5)
+        crop_param = np.concatenate([ratio, t0, t1], 1)
+        coeff_3dmm = np.concatenate([coeff_3dmm, crop_param], axis=1)
+
+    return coeff_3dmm
