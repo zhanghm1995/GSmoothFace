@@ -19,6 +19,9 @@ import librosa
 import torchvision.transforms as transforms
 import torch
 
+from .dataset_utils import load_split_file
+
+
 def get_all_valid_indices(total_length, fetch_length, stride) -> List:
     idx_list = list(range(0, total_length - fetch_length, stride))
     # last_idx = total_length - fetch_length
@@ -51,12 +54,7 @@ class BaseVideoDataset(Dataset):
         flag = osp.exists(self.data_root)
         assert flag, f"{self.data_root} is not exist, please check!"
         
-        if osp.isfile(split):
-            split_fp = split
-        else:
-            split_fp = osp.join(self.data_root, f'{split}.txt')
-        self.all_videos_dir = open(split_fp).read().splitlines()
-        
+        self.all_videos_dir = load_split_file(self.data_root, split)
         print(f"There are {len(self.all_videos_dir)} videos")
 
         self.fetch_length = fetch_length

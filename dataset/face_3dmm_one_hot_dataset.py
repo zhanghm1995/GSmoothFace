@@ -13,15 +13,29 @@ import numpy as np
 import torch
 from transformers import Wav2Vec2Processor
 import time
+from PIL import Image
+
+import torchvision.transforms as transforms
 
 from .base_video_dataset import BaseVideoDataset
 from .basic_bfm import BFMModel, BFMModelPyTorch
 from .face_3dmm_utils import get_face_3d_params
+from .dataset_utils import read_image_sequence
 
 
 class Face3DMMOneHotDataset(BaseVideoDataset):
-    def __init__(self, data_root, split, **kwargs) -> None:
+    def __init__(
+        self, 
+        data_root, 
+        split, 
+        use_template_face: bool = False,
+        need_load_image: bool = False,
+        **kwargs) -> None:
         super(Face3DMMOneHotDataset, self).__init__(data_root, split, **kwargs)
+
+        self.use_template_face = use_template_face
+        self.need_load_image = need_load_image
+
         self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         
         self.one_hot_labels = np.eye(len(self.all_videos_dir))
@@ -29,8 +43,12 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
 
         self.facemodel = BFMModelPyTorch("./data/BFM/BFM_model_front.mat")
 
-        self.use_template_face = False
-        
+        self.transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True),
+            ])
+
     def _get_template(self, choose_video):
         ## Assume the first frame is the template face
         video_path = osp.join(self.data_root, choose_video)
@@ -86,6 +104,11 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
             
             data_dict['template'] = template_face
             data_dict['face_vertex'] = gt_face_3d_vertex
+        
+        if self.need_load_image:
+            gt_img_seq_tensor = read_image_sequence(
+                self.data_root, choose_video, start_idx, self.fetch_length, self.transform)
+            data_dict['gt_face_image_seq'] = gt_img_seq_tensor
         
         data_dict['one_hot'] = torch.FloatTensor(one_hot)
         data_dict['video_name']  = choose_video
