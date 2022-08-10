@@ -19,6 +19,16 @@ from tqdm import tqdm
 from PIL import Image
 import numpy as np
 import time
+import cv2
+
+import kornia as K
+from kornia import morphology as morph
+from visualizer.render_utils import MyMeshRender
+import torch
+import torch.nn as nn
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.data import Dataset
 
 
 def test_2d_3d_dataset():
@@ -57,7 +67,7 @@ def test_Face3DMMOneHotDataset():
     data_root = "./data/HDTF_preprocessed"
     split = "./data/train.txt"
     
-    dataset = Face3DMMOneHotDataset(data_root, split, fetch_length=100, need_load_image=True)
+    dataset = Face3DMMOneHotDataset(data_root, split, fetch_length=40, need_load_image=True)
     print(len(dataset))
 
     item = dataset[0]
@@ -73,7 +83,7 @@ def test_Face3DMMOneHotDataset():
             print(key, value.shape)
         else:
             print(key, value)
-
+    return item
     # start = time.time()
     # for i in tqdm(range(100)):
     #     item = dataset[i]
@@ -81,5 +91,45 @@ def test_Face3DMMOneHotDataset():
     # print(f"{end - start} seconds", f"average time is {(end - start) / 100}")
 
 
+def build_blended_image(data_dict):
+    face_renderer = MyMeshRender()
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21))
+    kernel = torch.from_numpy(kernel.astype(np.int64))
+
+    face3dmm_params = data_dict['gt_face_origin_3d_params']
+
+    curr_face3dmm_params = face3dmm_params[:, :257]
+
+    rendered_face, rendered_mask = face_renderer.compute_rendered_face(
+        curr_face3dmm_params, None, return_numpy=False)
+    
+    rendered_face = rendered_face.to("cpu")
+    rendered_mask = rendered_mask.to("cpu")
+
+    ## Fill the holes of rendered mask
+    morpho_mask = morph.closing(rendered_mask, kernel.to(rendered_mask.device))
+
+    rescaled_rendered_face = K.geometry.warp_affine(rendered_face, data_dict['trans_mat_inv'], dsize=(512, 512))
+    rescaled_mask = K.geometry.warp_affine(morpho_mask, data_dict['trans_mat_inv'], dsize=(512, 512))
+    rescaled_rendered_face = (rescaled_rendered_face - 0.5) / 0.5
+
+    gt_face_image_seq = data_dict['gt_face_image_seq']
+
+    blended_img_tensor = gt_face_image_seq * (1 - rescaled_mask) + \
+                         rescaled_rendered_face * rescaled_mask
+    
+    res_dict = {}
+    res_dict['blended_image'] = blended_img_tensor # (T, 3, 512, 512)
+
+    vis_image = torch.concat([gt_face_image_seq, blended_img_tensor], dim=-1)
+    
+    vis_image = (vis_image + 1.0) / 2.0
+    torchvision.utils.save_image(vis_image, "hdtf_test.jpg", padding=0, nrows=4)
+    return res_dict
+
+
 if __name__ == "__main__":
-    test_Face3DMMOneHotDataset()
+    data = test_Face3DMMOneHotDataset()
+
+    build_blended_image(data)
