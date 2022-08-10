@@ -65,6 +65,9 @@ def test_Face3DMMOneHotDataset():
     print(item['face_vertex'].shape)
     print(item['template'].shape)
 
+    gt_img = item['gt_face_image_seq']
+    print(gt_img.min(), gt_img.max())
+
     for key, value in item.items():
         if torch.is_tensor(value):
             print(key, value.shape)

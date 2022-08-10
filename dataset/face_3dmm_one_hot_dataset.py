@@ -19,7 +19,7 @@ import torchvision.transforms as transforms
 
 from .base_video_dataset import BaseVideoDataset
 from .basic_bfm import BFMModel, BFMModelPyTorch
-from .face_3dmm_utils import get_face_3d_params
+from .face_3dmm_utils import get_face_exp_params_sequence
 from .dataset_utils import read_image_sequence
 
 
@@ -76,10 +76,10 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         data_dict['raw_audio'] = torch.tensor(audio_seq.astype(np.float32)) #(L, )
 
         ## Get the GT 3D face parameters
-        # face_3d_params_dict = self._get_face_3d_params(choose_video, start_idx, need_origin_params=True)
-        face_3d_params_dict = get_face_3d_params(self.data_root, choose_video, start_idx, 
-                                                 need_origin_params=True, 
-                                                 fetch_length=self.fetch_length)
+        face_3d_params_dict = get_face_exp_params_sequence(self.data_root, choose_video, start_idx, 
+                                                           fetch_length=self.fetch_length,
+                                                           need_origin_params=True,
+                                                           need_crop_params=True)
         data_dict.update(face_3d_params_dict)
 
         gt_face_3d_params_arr = face_3d_params_dict['gt_face_3d_params']

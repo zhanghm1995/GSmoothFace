@@ -124,9 +124,48 @@ def get_face_3d_params(
     return res_dict
 
 
+def get_face_exp_params_sequence(
+    data_root,
+    video_dir, 
+    start_idx, 
+    fetch_length: int = 100,
+    need_origin_params=False,
+    need_crop_params: bool = False):
+    """Get face 3d params from a video and specified start index
+
+    Args:
+        video_dir (str): video name
+        start_idx (int): start index
+
+    Returns:
+        np.ndarray: (L, C), L is the fetch length, C is the needed face parameters dimension
+    """
+    face_3d_params_list, face_origin_3d_params_list = [], []
+    for idx in range(start_idx, start_idx + fetch_length):
+        face_3d_params_path = osp.join(data_root, video_dir, "deep3dface", f"{idx:06d}.mat")
+        face_3mm_params_all = read_face3dmm_params(face_3d_params_path, need_crop_params=need_crop_params) # (1, 260)
+        
+        face_exp_params = face_3mm_params_all[:, 80:144] # (1, 64)
+
+        if need_origin_params:
+            face_origin_3d_params_list.append(face_3mm_params_all)
+        
+        face_3d_params_list.append(face_exp_params)
+
+    res_dict = dict()
+    
+    res_dict['gt_face_3d_params'] = torch.FloatTensor(np.concatenate(face_3d_params_list, axis=0)) # (T, 64)
+    
+    if need_origin_params:
+        # (T, 257)
+        res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
+
+    return res_dict
+
+
 def read_face3dmm_params(file_path, need_crop_params=False):
     assert file_path.endswith(".mat")
-    
+
     file_mat = loadmat(file_path)
     coeff_3dmm = get_coeff_vector(file_mat)
     
