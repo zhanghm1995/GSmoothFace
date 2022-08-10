@@ -146,24 +146,39 @@ def get_face_exp_params_sequence(
         face_3mm_params_all = read_face3dmm_params(face_3d_params_path, need_crop_params=need_crop_params) # (1, 260)
         
         face_exp_params = face_3mm_params_all[:, 80:144] # (1, 64)
+        face_3d_params_list.append(face_exp_params)
 
         if need_origin_params:
             face_origin_3d_params_list.append(face_3mm_params_all)
-        
-        face_3d_params_list.append(face_exp_params)
 
     res_dict = dict()
     
     res_dict['gt_face_3d_params'] = torch.FloatTensor(np.concatenate(face_3d_params_list, axis=0)) # (T, 64)
     
     if need_origin_params:
+        gt_face_origin_3d_params = np.concatenate(face_origin_3d_params_list, axis=0) # (T, 257|260)
         # (T, 257)
-        res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(np.concatenate(face_origin_3d_params_list, axis=0))
+        res_dict['gt_face_origin_3d_params'] = torch.FloatTensor(gt_face_origin_3d_params)
+        
+        if need_crop_params:
+            crop_params = gt_face_origin_3d_params[:, -3:]
+            trans_mat, trans_mat_inv = get_warp_matrix_sequence(crop_params, origin_size=512)
+            res_dict['trans_mat'] = trans_mat
+            res_dict['trans_mat_inv'] = trans_mat_inv
 
     return res_dict
 
 
 def read_face3dmm_params(file_path, need_crop_params=False):
+    """Read the 3dmm face parameters from mat file
+
+    Args:
+        file_path (_type_): _description_
+        need_crop_params (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        _type_: _description_
+    """
     assert file_path.endswith(".mat")
 
     file_mat = loadmat(file_path)
@@ -176,3 +191,27 @@ def read_face3dmm_params(file_path, need_crop_params=False):
         coeff_3dmm = np.concatenate([coeff_3dmm, crop_param], axis=1)
 
     return coeff_3dmm
+
+
+def get_warp_matrix(trans_params, origin_size=512, target_size=224):
+    scale, t0, t1 = trans_params[:3]
+    
+    dx = -(t0 * scale - target_size / 2)
+    dy = -((origin_size - t1) * scale - target_size / 2)
+    mat = torch.FloatTensor([[scale, 0, dx],
+                             [0, scale, dy]])
+    mat_inv = torch.FloatTensor([[1 / mat[0, 0], 0, -mat[0, 2] / mat[0, 0]],
+                                 [0, 1 / mat[1, 1], -mat[1, 2] / mat[1, 1]]])
+    return mat, mat_inv
+
+
+def get_warp_matrix_sequence(trans_params_batch, origin_size=512):
+    mat_list, mat_inv_list = [], []
+    for i in range(trans_params_batch.shape[0]):
+        mat, mat_inv = get_warp_matrix(trans_params_batch[i], origin_size=origin_size)
+        mat_list.append(mat)
+        mat_inv_list.append(mat_inv)
+    
+    mat_seq = torch.stack(mat_list, dim=0)
+    mat_inv_seq = torch.stack(mat_inv_list, dim=0)
+    return mat_seq, mat_inv_seq

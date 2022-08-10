@@ -78,7 +78,7 @@ class MyMeshRender(object):
             return output_numpy, self.pred_mask
         else:
             # return pytorch tensor in [0, 1], torch.float dtype
-            return self.pred_face
+            return self.pred_face, self.pred_mask
 
     def compute_mesh(self, save_path=None):
         recon_shape = self.pred_vertex  # get reconstructed shape
