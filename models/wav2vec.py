@@ -74,7 +74,7 @@ def linear_interpolation(features, input_fps, output_fps, output_len=None):
     features = features.transpose(1, 2)
     seq_len = features.shape[2] / float(input_fps)
     if output_len is None:
-        output_len = int(seq_len * output_fps)
+        output_len = round(seq_len * output_fps)
     output_features = F.interpolate(features,size=output_len,align_corners=True,mode='linear')
     return output_features.transpose(1, 2)
 

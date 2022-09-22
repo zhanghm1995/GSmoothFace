@@ -129,7 +129,22 @@ def build_blended_image(data_dict):
     return res_dict
 
 
+def test_Face3DMMTestDataset():
+    from dataset import get_test_dataset
+    
+    config = OmegaConf.load("./config/AAAI/speaker_341_no_template_face.yaml")
+
+    test_dataset = get_test_dataset(config.dataset)
+    print(len(test_dataset))
+
+    data = iter(test_dataset).next()
+    print(data['one_hot'].shape)
+
+
 if __name__ == "__main__":
+    test_Face3DMMTestDataset()
+    exit(0)
+
     data = test_Face3DMMOneHotDataset()
 
     build_blended_image(data)
