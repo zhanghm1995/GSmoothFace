@@ -185,7 +185,7 @@ class Face3DMMFormer(nn.Module):
             vertice_emb = torch.cat((vertice_emb, new_output), 1)
 
         vertice_out = torch.cat((first_frame_params.unsqueeze(1), vertice_out), 1)
-        return {'face_3d_params': vertice_out}
+        return vertice_out
 
     def _extract_audio_features(self, audio_input, output_num_frames):
         hidden_states = self.audio_encoder(

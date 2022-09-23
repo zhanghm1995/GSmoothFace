@@ -16,6 +16,7 @@ from torch.nn import functional as F
 import pytorch_lightning as pl
 from .face_3dmm_former import Face3DMMFormer
 from .losses.face3dmm_loss import Face3DMMLoss
+from visualizer import Face3DMMRenderer
 
 
 class Face3DMMFormerModule(pl.LightningModule):
@@ -31,6 +32,8 @@ class Face3DMMFormerModule(pl.LightningModule):
         self.model = Face3DMMFormer(config.model.params)
 
         self.compute_loss = Face3DMMLoss(config.face3dmm_loss)
+
+        self.face_3dmm_renderer = Face3DMMRenderer()
 
     def training_step(self, batch, batch_idx):
         model_output = self.model(batch, teacher_forcing=False)
@@ -71,7 +74,7 @@ class Face3DMMFormerModule(pl.LightningModule):
         model_output = self.model.predict(batch).detach() # (B, T, 64)
         # model_output = F.pad(model_output, (0, 0, 0, 1), mode="replicate")
 
-        face3dmm_params = batch['gt_face_origin_3d_params']
+        face3dmm_params = batch['gt_face_origin_3d_params'][..., :257]
         face3dmm_params[:, :, 80:144] = model_output
 
         if save_dir is None:
