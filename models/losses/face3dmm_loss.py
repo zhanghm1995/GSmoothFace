@@ -26,8 +26,10 @@ class Face3DMMLoss(nn.Module):
             mouth_mask[binary_mouth_mask] = 1.8
             self.mouth_mask_weight = torch.from_numpy(np.expand_dims(mouth_mask, 0)) # (1, 35709)
 
-    def forward(self, data_dict, model_output,):
+    def forward(self, data_dict, model_output):
         if self.supervise_vertices:
+            vertice = data_dict['face_vertex'] # GT vertices
+
             pred_output = model_output['face_3d_params']
 
             exp_base = data_dict['exp_base'] # (1, 3N, 64)
