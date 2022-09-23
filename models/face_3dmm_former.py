@@ -167,7 +167,6 @@ class Face3DMMFormer(nn.Module):
         frame_num = hidden_states.shape[1]
 
         first_frame_params = torch.zeros((batch_size, dim_exp_params)).to(device)
-        print(first_frame_params.shape, hidden_states.shape)
 
         for i in range(frame_num - 1):
             if i == 0:
