@@ -67,13 +67,14 @@ if not config.test_mode:
     train_dataloader = get_dataloader_new(config.dataset.train)
     print(f"The training dataloader length is {len(train_dataloader)}")
 
-    val_dataloader = get_dataloader_new(config.dataset.validation)
+    val_dataloader = get_dataloader_new(config.dataset.val)
     print(f"The validation dataloader length is {len(val_dataloader)}")
 
     ## 2) Start training
-    trainer = pl.Trainer(gpus=1,
+    trainer = pl.Trainer(devices=1,
+                         accelerator="gpu",
                          default_root_dir=config.log_dir,
-                         **config.Trainer)
+                         **config.trainer)
     
     ## Resume the training state
     trainer.fit(model, train_dataloader, val_dataloader, 

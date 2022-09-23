@@ -16,4 +16,5 @@ def get_model(name, config):
     else:
         raise ValueError(f"{name} model has been defined!")
     
+    print("Create model: ", name)
     return model

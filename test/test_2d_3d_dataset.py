@@ -141,7 +141,7 @@ def test_Face3DMMTestDataset():
     print(data['one_hot'].shape)
 
 
-def test_Face3DMMDataset():
+def test_get_dataset_new():
     from dataset import get_dataset_new
 
     config = OmegaConf.load("config/CVPR/face3dmmformer_wo_speaker_id.yaml")
@@ -151,11 +151,14 @@ def test_Face3DMMDataset():
 
     entry = dataset[10]
     for key, value in entry.items():
-        print(key, value.shape)
+        try:
+            print(key, value.shape)
+        except:
+            print(key, type(value))
 
 
 if __name__ == "__main__":
-    test_Face3DMMDataset()
+    test_get_dataset_new()
     exit(0)
 
     data = test_Face3DMMOneHotDataset()

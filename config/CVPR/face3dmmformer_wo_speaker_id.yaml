@@ -40,30 +40,32 @@ dataset:
   number_workers: 6
 
   train:
-    type: Face3DMMDataset
+    type: Face3DMMOneHotDataset
     params:
       data_root: ./data/HDTF_preprocessed
       split: data/train.txt
       fetch_length: 100
       fetch_stride: 100
+      use_template_face: False
 
     dataloader_params:
       batch_size: 1
       shuffle: True
-      number_workers: 6
+      num_workers: 6
   
   val:
-    type: Face3DMMDataset
+    type: Face3DMMOneHotDataset
     params:
       data_root: ./data/HDTF_preprocessed
       split: data/train.txt
       fetch_length: 100
       fetch_stride: 100
+      use_template_face: False
     
     dataloader_params:
       batch_size: 1
       shuffle: False
-      number_workers: 6
+      num_workers: 6
 
   # audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
   audio_path: data/audio_samples/Silence.wav

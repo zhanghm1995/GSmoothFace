@@ -97,9 +97,14 @@ def get_dataset_new(data_config):
     Returns:
         DataLoader: the torch dataloader
     """
+    print(f"Create dataset: {data_config.type}")
+
     if data_config.type == "Face2D3DDataset":
         from .face_2d_3d_dataset import Face2D3DDataset
         dataset = Face2D3DDataset(**data_config.params)
+    if data_config.type == "Face3DMMOneHotDataset":
+        from .face_3dmm_one_hot_dataset import Face3DMMOneHotDataset
+        dataset = Face3DMMOneHotDataset(**data_config.params)
     elif data_config.type == "Face3DMMDataset":
         from .face_3dmm_dataset import Face3DMMDataset
         dataset = Face3DMMDataset(**data_config.params)
