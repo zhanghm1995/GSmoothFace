@@ -84,3 +84,33 @@ def get_test_dataset(config):
         collate_fn=collate_fn
     )
     return data_loader
+
+
+def get_dataset_new(data_config):
+    """Get the dataset contains 2D image and 3D information
+
+    Args:
+        config (dict): config parameters
+        split (str): train or val
+        shuffle (bool, optional): Whether shuffle. Defaults to None.
+
+    Returns:
+        DataLoader: the torch dataloader
+    """
+    if data_config.type == "Face2D3DDataset":
+        from .face_2d_3d_dataset import Face2D3DDataset
+        dataset = Face2D3DDataset(**data_config.params)
+    else:
+        dataset_name = data_config.type
+        raise ValueError(f"{dataset_name} dataset has not been defined")
+
+    return dataset
+
+
+def get_dataloader_new(data_config):
+    dataset = get_dataset_new(data_config)
+    data_loader = DataLoader(
+        dataset,
+        **data_config.dataloader_params
+    )
+    return data_loader

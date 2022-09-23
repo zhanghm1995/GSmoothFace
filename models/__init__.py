@@ -1,8 +1,8 @@
-from .face_3dmm_former_module import Face3DMMFormerModule
 
 
 def get_model(name, config):
     if name == "Face3DMMFormer":
+        from .face_3dmm_former_module import Face3DMMFormerModule
         model = Face3DMMFormerModule(config)
     elif name == "Face3DMMOneHotFormer":
         from .face_3dmm_one_hot_former_module import Face3DMMOneHotFormerModule

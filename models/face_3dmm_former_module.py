@@ -28,7 +28,7 @@ class Face3DMMFormerModule(pl.LightningModule):
         self.save_hyperparameters()
 
         ## Define the model
-        self.model = Face3DMMFormer(config.Face3DMMFormer)
+        self.model = Face3DMMFormer(config.model.params)
 
         self.compute_loss = Face3DMMLoss(config.face3dmm_loss)
 

@@ -12,7 +12,7 @@ import torch
 import os.path as osp
 import time
 import pytorch_lightning as pl
-from dataset import get_3dmm_dataset, get_test_dataset
+from dataset import get_dataloader_new, get_test_dataset
 from omegaconf import OmegaConf
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
@@ -25,7 +25,7 @@ def parse_config():
     parser.add_argument('--cfg', type=str, default='./config/face_3dmm_expression_mouth_mask.yaml', help='the config file path')
     parser.add_argument('--exp_name', type=str, default=None, help='specify the experiment name')
     parser.add_argument('--log_dir', type=str, nargs='?', const="work_dir/debug")
-    parser.add_argument('--checkpoint', type=str, default=None, help="the pretrained checkpoint path")
+    parser.add_argument('--checkpoint_path', type=str, default=None, help="the pretrained checkpoint path")
     parser.add_argument('--test_mode', action='store_true', help="whether is a test mode")
 
     args = parser.parse_args()
@@ -59,33 +59,33 @@ model = get_model(config.model_name, config)
 if not config.test_mode:
     print(f"{'='*25} Start Traning, Good Luck! {'='*25}")
     
-    if config.checkpoint is None:
+    if config.checkpoint_path is None:
         print(f"[WARNING] Train from scratch!")
 
     ## ======================= Training ======================= ##
     ## 1) Define the dataloader
-    train_dataloader = get_3dmm_dataset(config.dataset.train, shuffle=True)
+    train_dataloader = get_dataloader_new(config.dataset.train)
     print(f"The training dataloader length is {len(train_dataloader)}")
 
-    val_dataloader = get_3dmm_dataset(config.dataset.validation, shuffle=False)
+    val_dataloader = get_dataloader_new(config.dataset.validation)
     print(f"The validation dataloader length is {len(val_dataloader)}")
 
     ## 2) Start training
     trainer = pl.Trainer(gpus=1,
-                         default_root_dir=config['log_dir'],
+                         default_root_dir=config.log_dir,
                          **config.Trainer)
     
     ## Resume the training state
     trainer.fit(model, train_dataloader, val_dataloader, 
-                ckpt_path=config.checkpoint)
+                ckpt_path=config.checkpoint_path)
 else:
     print(f"{'='*25} Start Testing, Good Luck! {'='*25}")
 
-    print(f"[INFO] Load pretrained model from {config.checkpoint} for testing...")
-    model = model.load_from_checkpoint(config.checkpoint, config=config)
+    print(f"[INFO] Load pretrained model from {config.checkpoint_path} for testing...")
+    model = model.load_from_checkpoint(config.checkpoint_path, config=config)
 
     test_dataloader = get_test_dataset(config['dataset'])
     print(f"The testing dataloader length is {len(test_dataloader)}")
     
-    trainer = pl.Trainer(gpus=1, default_root_dir=config['log_dir'])
+    trainer = pl.Trainer(gpus=1, default_root_dir=config.log_dir)
     trainer.test(model, test_dataloader)
