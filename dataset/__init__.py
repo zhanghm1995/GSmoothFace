@@ -100,6 +100,9 @@ def get_dataset_new(data_config):
     if data_config.type == "Face2D3DDataset":
         from .face_2d_3d_dataset import Face2D3DDataset
         dataset = Face2D3DDataset(**data_config.params)
+    elif data_config.type == "Face3DMMDataset":
+        from .face_3dmm_dataset import Face3DMMDataset
+        dataset = Face3DMMDataset(**data_config.params)
     else:
         dataset_name = data_config.type
         raise ValueError(f"{dataset_name} dataset has not been defined")

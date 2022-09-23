@@ -14,7 +14,7 @@ sys.path.append("../")
 import torch
 
 from omegaconf import OmegaConf
-from dataset import get_dataset
+from dataset import get_dataset, get_test_dataset
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
@@ -141,8 +141,21 @@ def test_Face3DMMTestDataset():
     print(data['one_hot'].shape)
 
 
+def test_Face3DMMDataset():
+    from dataset import get_dataset_new
+
+    config = OmegaConf.load("config/CVPR/face3dmmformer_wo_speaker_id.yaml")
+
+    dataset = get_dataset_new(config.dataset.train)
+    print(len(dataset))
+
+    entry = dataset[10]
+    for key, value in entry.items():
+        print(key, value.shape)
+
+
 if __name__ == "__main__":
-    test_Face3DMMTestDataset()
+    test_Face3DMMDataset()
     exit(0)
 
     data = test_Face3DMMOneHotDataset()

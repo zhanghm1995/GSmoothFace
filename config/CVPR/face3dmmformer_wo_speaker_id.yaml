@@ -40,7 +40,7 @@ dataset:
   number_workers: 6
 
   train:
-    type: Face3DMMOneHotDataset
+    type: Face3DMMDataset
     params:
       data_root: ./data/HDTF_preprocessed
       split: data/train.txt
@@ -53,7 +53,7 @@ dataset:
       number_workers: 6
   
   val:
-    type: Face3DMMOneHotDataset
+    type: Face3DMMDataset
     params:
       data_root: ./data/HDTF_preprocessed
       split: data/train.txt

@@ -17,7 +17,7 @@ from .base_video_dataset import BaseVideoDataset
 
 
 class Face3DMMDataset(BaseVideoDataset):
-    def __init__(self, data_root, split, **kwargs) -> None:
+    def __init__(self, data_root=None, split=None, **kwargs) -> None:
         super(Face3DMMDataset, self).__init__(data_root, split, **kwargs)
         self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         
