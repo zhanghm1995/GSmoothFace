@@ -108,11 +108,14 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         if batch_idx % 100 != 0:
             return
 
+        face3dmm_params = batch['gt_face_origin_3d_params'][..., :257]
+
         ## Visualization
         model_output = self.model.predict(batch).detach() # (B, T, 64)
-        model_output = F.pad(model_output, (0, 0, 0, 1), mode="replicate")
-
-        face3dmm_params = batch['gt_face_origin_3d_params']
+        num_frame = face3dmm_params.shape[1]
+        if model_output.shape[1] != num_frame:
+            model_output = F.pad(model_output, (0, 0, 0, 1), mode="replicate")
+        
         face3dmm_params[:, :, 80:144] = model_output
 
         save_dir = osp.join(self.logger.log_dir, "results/val", f"epoch_{self.current_epoch:03d}")

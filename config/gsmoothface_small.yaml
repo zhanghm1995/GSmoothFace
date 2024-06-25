@@ -1,4 +1,4 @@
-## Refer to the FaceFormer to predict the expression parameters
+## A small version for training GSmoothFace in small dataset.
 exp_name: full_model
 
 log_dir: work_dir/train_one_hot_3dmmformer

@@ -21,9 +21,9 @@ dataset:
   batch_size: 1
   fetch_length: 600
   fetch_stride: 600
-  # audio_path: /home/haimingzhang/Research/Programming/cv-fighter/Cheat-Sheet-For-FFmpeg/data/remember_me.wav
   # audio_path: data/HDTF_preprocessed/WRA_JoniErnst1_000/WRA_JoniErnst1_000.wav
-  audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
+  # audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
+  audio_path: data/audio_samples/remember_me.wav
   video_name: train/WDA_KimSchrier_000
   training_split: train
   number_workers: 6
@@ -37,5 +37,6 @@ Face3DMMFormer:
   dataset: vocaset
   feature_dim: 1024
   period: 25
+  num_speakers: 8 # for one-hot identities embedding
   vertice_dim: 64
   use_mouth_mask: False

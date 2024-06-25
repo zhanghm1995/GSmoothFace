@@ -84,7 +84,7 @@ class Wav2Vec2Model(Wav2Vec2Model):
     def forward(
         self,
         input_values,
-        dataset,
+        dataset="vocaset",
         attention_mask=None,
         output_attentions=None,
         output_hidden_states=None,

@@ -96,7 +96,7 @@ class Face3DMMOneHotFormer(nn.Module):
         # motion decoder
         self.vertice_map_r = nn.Linear(args.feature_dim, args.vertice_dim)
         # style embedding
-        self.obj_vector = nn.Linear(341, args.feature_dim, bias=False)
+        self.obj_vector = nn.Linear(args.num_speakers, args.feature_dim, bias=False)
         # self.device = args.device
         nn.init.constant_(self.vertice_map_r.weight, 0)
         nn.init.constant_(self.vertice_map_r.bias, 0)
@@ -122,10 +122,6 @@ class Face3DMMOneHotFormer(nn.Module):
         obj_embedding = self.obj_vector(one_hot)#(1, feature_dim)
         frame_num = vertice.shape[1]
         hidden_states = self.audio_encoder(audio, self.dataset, frame_num=frame_num).last_hidden_state
-        if self.dataset == "BIWI":
-            if hidden_states.shape[1]<frame_num*2:
-                vertice = vertice[:, :hidden_states.shape[1]//2]
-                frame_num = hidden_states.shape[1]//2
         hidden_states = self.audio_feature_map(hidden_states)
 
         if teacher_forcing:
@@ -194,10 +190,7 @@ class Face3DMMOneHotFormer(nn.Module):
         template = template.unsqueeze(1) # (1,1, V*3)
         obj_embedding = self.obj_vector(one_hot)
         hidden_states = self.audio_encoder(audio, self.dataset, output_fps=25).last_hidden_state
-        if self.dataset == "BIWI":
-            frame_num = hidden_states.shape[1]//2
-        elif self.dataset == "vocaset":
-            frame_num = hidden_states.shape[1]
+        frame_num = hidden_states.shape[1]
         hidden_states = self.audio_feature_map(hidden_states)
 
         for i in range(frame_num):

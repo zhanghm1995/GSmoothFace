@@ -36,10 +36,10 @@ class Face3DMMOneHotDataset(BaseVideoDataset):
         self.use_template_face = use_template_face
         self.need_load_image = need_load_image
 
-        self.audio_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+        self.audio_processor = Wav2Vec2Processor.from_pretrained("./facebook/wav2vec2-base-960h")
         
-        self.one_hot_labels = np.eye(len(self.all_videos_dir))
-        # self.one_hot_labels = np.eye(8)
+        # self.one_hot_labels = np.eye(len(self.all_videos_dir))
+        self.one_hot_labels = np.eye(8)
 
         self.facemodel = BFMModelPyTorch("./data/BFM/BFM_model_front.mat")
 
