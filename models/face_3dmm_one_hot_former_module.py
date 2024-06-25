@@ -146,15 +146,22 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
         face3dmm_params = torch.zeros((model_output.shape[:2]) + (257,)).to(model_output)
         face3dmm_params[:, :, 80:144] = model_output
 
+        file_name = f"{video_name}_{batch_idx:03d}"
+
         self.face_3dmm_renderer.render_3dmm_face(face3dmm_params, 
                                                  output_dir=save_dir,
                                                  rgb_mode=True,
-                                                 name=batch_idx,
+                                                 name=file_name,
                                                  audio_array=batch['raw_audio'])
 
         ## Save the prediction to npy file
         model_output = model_output.squeeze().detach().cpu().numpy()
-        np.save(osp.join(save_dir, f"{batch_idx}.npy"), model_output)
+        np.save(osp.join(save_dir, f"{file_name}.npy"), model_output)
+
+        ## Save audio
+        audio = batch['raw_audio']
+        audio_data = audio[0].cpu().numpy()
+        wavfile.write(osp.join(save_dir, f"{file_name}.wav"), 16000, audio_data)
 
     def test_step_old(self, batch, batch_idx):
         audio = batch['raw_audio']

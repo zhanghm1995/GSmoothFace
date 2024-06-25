@@ -58,7 +58,7 @@ Actually, we only use the `BFM_model_front.mat` file for training GSmoothFace, b
 
 2.Prepare the talking face videos for training and testing. Our method supports the [VoxCeleb2](https://www.robots.ox.ac.uk/~vgg/data/voxceleb/vox2.html) dataset and [HDTF](https://github.com/MRzzm/HDTF) dataset. Due to the datasets license, we cannot provide the original data directly. You can download them and process it by yourself, and the preprocessing code is in [here](https://github.com/zhanghm1995/Deep3DFaceRecon_pytorch).
 
-Here we provide a **small** portion of preprocessed HDTF dataset for quick start. You can download it from [here]().
+Here we provide a **small** portion of preprocessed HDTF dataset for quick start. You can download it from [BaiduNetDisk](https://pan.baidu.com/s/1v9nlpLgrrEZXy53bwKsvNQ) (code: uhg9).
 After downloading, link the HDTF folder in the `data` directory, the file struture is as follows:
 ```bash
 ./data/HDTF_face3dmmformer
@@ -91,7 +91,7 @@ python main_train_one_hot.py --cfg config/gsmoothface_small.yaml
 #### Step 3: Inference
 You can infer the GSmoothFace with the following steps:
 
-Step 3.1: Predict the 3DMM parameters conform to your given audio samples. Here we also provide some audio samples for you quickly testing. Please modify the `audio_path` and the `video_name` in the `config/demo.yaml` file with your driven audio and the speaker you want to generate. Then run the following command:
+Step 3.1: Predict the 3DMM parameters conform to your given audio samples. Here we also provide some audio samples for you quickly testing in the above mentioned [BaiduNetDisk](https://pan.baidu.com/s/1v9nlpLgrrEZXy53bwKsvNQ) (code: uhg9). Please modify the `audio_path` and the `video_name` in the `config/demo.yaml` file with your driven audio and the speaker you want to generate. Then run the following command:
 ```bash
 python demo.py --cfg config/demo.yaml --test_mode \
                --checkpoint <your/checkpoint/path> \
@@ -99,9 +99,19 @@ python demo.py --cfg config/demo.yaml --test_mode \
 ```
 After running, you will obtain the corresponding 3DMM parameters in `.npy` format as well as the rendered 3DMM face videos without head pose in the folder `work_dir/demo/lighting_logs/version_0/vis` by default. And because our method slice the long audio with same length, the results will be divided into multiple parts.
 
-Step 3.2:
+Step 3.2: Render the predicted 3DMM parameters with head poses.
+```bash
+bash app/main_render_pred_results.sh
+```
+The rendered results and will be placed in the `<output_root>` specified by yourself. You can also make a sound video with our provided script:
+```bash
+bash create_video_app.sh
+```
 
+Step 3.3: Generate the final talking face video via the **TAFT** module.
+```bash
 
+```
 
 ## Acknowledgement
 

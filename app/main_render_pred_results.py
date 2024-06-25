@@ -138,7 +138,7 @@ def vis_rendered_face_list(args, data_root: str, output_root=None, need_pose=Tru
     matrix_file_list = sorted(glob(osp.join(data_root, "*.mat")))
 
     ## Read the generated face vertex
-    gen_face_vertex = torch.FloatTensor(np.load(args.gen_vertex_path)) # (B, N)
+    gen_face_vertex = np.load(args.gen_vertex_path) # (B, N)
 
     ## Get the minium length
     minimum_length = min(len(matrix_file_list), len(gen_face_vertex))
@@ -185,6 +185,9 @@ def vis_rendered_face_list(args, data_root: str, output_root=None, need_pose=Tru
             else:
                 cv2.imwrite(osp.join(output_root, file_name), image[..., ::-1])
 
+            # save the modified 3DMM parameters
+            save_mat_fp = osp.join(output_root, osp.basename(matrix_file))
+            savemat(save_mat_fp, face_params_dict)
 
 
 if __name__ == "__main__":
