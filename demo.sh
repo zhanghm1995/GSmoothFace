@@ -9,4 +9,4 @@ set -x
 checkpoint="work_dir/TVCG/face3dmm_8_speakers/lightning_logs/version_0/checkpoints/epoch=19-step=10399.ckpt"
 python demo.py --cfg config/demo.yaml --test_mode \
                --checkpoint ${checkpoint} \
-               --checkpoint_dir work_dir/TVCG/demo
+               --checkpoint_dir work_dir/TVCG/WDA_ChrisMurphy0_000_audio_RD_Radio34_002

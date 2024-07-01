@@ -17,7 +17,7 @@ from torch.nn import functional as F
 import pytorch_lightning as pl
 import subprocess
 
-from .face_3dmm_one_hot_former import Face3DMMOneHotFormer
+from .face_3dmm_one_hot_former import Face3DMMOneHotFormer, Face3DMMOneHotFormerWoExpressionEncoder
 from visualizer import Face3DMMRenderer
 
 
@@ -79,22 +79,6 @@ class Face3DMMOneHotFormerModule(pl.LightningModule):
 
         ## Logging
         self.log('train/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=self.batch_size)
-        return loss
-
-        if self.config.supervise_exp:
-            pred_exp = self.model(
-                batch, self.criterion, teacher_forcing=self.config.teacher_forcing,
-                return_loss=False, return_exp=True)
-            loss = self.criterion(pred_exp, batch['gt_face_3d_params'])
-            loss = torch.mean(loss)
-        else:
-            loss = self.model(
-                batch, self.criterion, teacher_forcing=self.config.teacher_forcing)
-
-        batch_size = audio.shape[0]
-        
-        ## Calcuate the loss
-        self.log('train/total_loss', loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
         return loss
 
     def validation_step(self, batch, batch_idx):

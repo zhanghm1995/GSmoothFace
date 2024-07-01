@@ -122,7 +122,7 @@ class Face3DMMOneHotFormer(nn.Module):
         obj_embedding = self.obj_vector(one_hot)#(1, feature_dim)
         frame_num = vertice.shape[1]
         hidden_states = self.audio_encoder(audio, self.dataset, frame_num=frame_num).last_hidden_state
-        hidden_states = self.audio_feature_map(hidden_states)
+        hidden_states = self.audio_feature_map(hidden_states)  # (bs, frame_num, feature_dim)
 
         if teacher_forcing:
             vertice_emb = obj_embedding.unsqueeze(1) # (1,1,feature_dim)
@@ -217,3 +217,75 @@ class Face3DMMOneHotFormer(nn.Module):
             vertice_out = vertice_out + template
         return vertice_out
 
+
+
+class Face3DMMOneHotFormerWoExpressionEncoder(Face3DMMOneHotFormer):
+    """A ablation version remove the expression encoder.
+
+    Args:
+        Face3DMMOneHotFormerWoExpressionEncoder (_type_): _description_
+    """
+    def __init__(self, args, **kwargs):
+        super().__init__(args, **kwargs)
+
+        ## remove the transformer decoder
+        del self.transformer_decoder
+        del self.obj_vector
+
+    def forward(self, batch, criterion=None, teacher_forcing=True, return_loss=True, return_exp=False):
+        audio = batch['raw_audio']
+        template = batch['template']
+        vertice = batch['face_vertex']
+        one_hot = batch['one_hot']
+
+        frame_num = vertice.shape[1]
+        hidden_states = self.audio_encoder(audio, self.dataset, frame_num=frame_num).last_hidden_state
+        hidden_states = self.audio_feature_map(hidden_states)  # (bs, frame_num, feature_dim)
+
+        vertice_out = self.vertice_map_r(hidden_states)
+
+        if self.config.vertice_dim == 64:
+            ## in this case, we predict the expression parameters
+            if not return_exp:
+                exp_base = batch['exp_base'] # (1, 3N, 64)
+                vertice_out = template + torch.einsum('ijk,iak->iaj', exp_base, vertice_out)
+        else:
+            vertice_out = vertice_out + template
+        
+        if not return_loss:
+            return vertice_out
+        
+        if self.config.use_mouth_mask:
+            batch, seq_len = vertice_out.shape[:2]
+            ## If consider mouth region weight
+            vertice_out = vertice_out.reshape((batch, seq_len, -1, 3))
+            vertice = vertice.reshape((batch, seq_len, -1, 3))
+
+            loss = torch.sum((vertice_out - vertice)**2, dim=-1) * self.mouth_mask_weight[None, ...].to(vertice)
+            loss = torch.mean(loss)
+        else:
+            loss = criterion(vertice_out, vertice) # (batch, seq_len, V*3)
+            loss = torch.mean(loss)
+        return loss
+
+    def predict(self, batch):
+        audio = batch['raw_audio']
+        template = batch['template']
+        one_hot = batch['one_hot']
+
+        device = audio.device
+
+        template = template.unsqueeze(1) # (1,1, V*3)
+        hidden_states = self.audio_encoder(audio, self.dataset, output_fps=25).last_hidden_state
+        frame_num = hidden_states.shape[1]
+        hidden_states = self.audio_feature_map(hidden_states)
+
+        vertice_out = self.vertice_map_r(hidden_states)
+
+        if self.config.vertice_dim == 64:
+            ## in this case, we predict the expression parameters
+            exp_base = batch['exp_base'] # (1, 3N, 64)
+            # vertice_out = template + torch.einsum('ijk,iak->iaj', exp_base, vertice_out)
+        else:
+            vertice_out = vertice_out + template
+        return vertice_out

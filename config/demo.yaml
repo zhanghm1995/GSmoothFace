@@ -23,8 +23,11 @@ dataset:
   fetch_stride: 600
   # audio_path: data/HDTF_preprocessed/WRA_JoniErnst1_000/WRA_JoniErnst1_000.wav
   # audio_path: data/HDTF_preprocessed/WRA_KristiNoem0_000/WRA_KristiNoem0_000.wav
-  audio_path: data/audio_samples/remember_me.wav
-  video_name: train/WDA_KimSchrier_000
+  # audio_path: data/audio_samples/remember_me.wav
+  # audio_path: data/audio_samples/driven_audio/RD_Radio31_000.wav
+  audio_path: data/audio_samples/driven_audio/RD_Radio34_002.wav
+  # video_name: train/WDA_KimSchrier_000
+  video_name: train/WDA_ChrisMurphy0_000
   training_split: train
   number_workers: 6
 

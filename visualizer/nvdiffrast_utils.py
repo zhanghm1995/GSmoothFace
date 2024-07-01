@@ -55,7 +55,7 @@ class MeshRenderer(nn.Module):
 
         vertex_ndc = vertex @ ndc_proj.t()
         if self.glctx is None:
-            self.glctx = dr.RasterizeGLContext(device=device)
+            self.glctx = dr.RasterizeCudaContext(device=device)
             print("create glctx on device cuda:%d"%device.index)
         
         ranges = None

@@ -1,6 +1,6 @@
 ## GSmothFace: Generalized Smooth Talking Face Generation via Fine Grained 3D Face Guidance
 
-## Dependencies
+## Installation
 Python>=3.6
 - Check the required python packages in `requirements.txt`.
 - ffmpeg
@@ -14,6 +14,11 @@ conda install ffmpeg  # we need to install ffmpeg from anaconda to include the x
 ```
 
 For visualization, you need to install the [nvdiffrast](https://nvlabs.github.io/nvdiffrast/) package, please check the link to compile and install it in your python environment.
+```bash
+git clone https://github.com/NVlabs/nvdiffrast
+cd nvdiffrast
+pip install .
+```
 
 ## Demo
 
@@ -40,7 +45,7 @@ And pay attention to the corresponding audio file is placed in the rendered imag
 
 ## Train
 ### Data preparation
-1.Our method uses Basel Face Model 2009 (BFM09) to represent 3d faces (the 3DMM model). You can download them from [here](https://faces.dmi.unibas.ch/bfm/main.php?nav=1-2&id=downloads). And download the Expression Basis (Exp_Pca.bin) using this [link (google drive)](https://drive.google.com/file/d/1bw5Xf8C12pWmcMhNEu6PtsYVZkVucEN6/view). After downloading, link the BFM folder in the data directory, the file struture is as follows:
+1.Our method uses Basel Face Model 2009 (BFM09) to represent 3d faces (the 3DMM model). You can download them from [here](https://faces.dmi.unibas.ch/bfm/main.php?nav=1-2&id=downloads) (register and download). And download the Expression Basis (`Exp_Pca.bin`) from this [link (google drive)](https://drive.google.com/file/d/1bw5Xf8C12pWmcMhNEu6PtsYVZkVucEN6/view). Download the BFM model Front file `BFM_model_front.mat` from this [link](https://drive.google.com/drive/folders/1YCxXKJFfo1w01PzayhnxWSZZK5k7spSH). After downloading all above files, link the BFM folder in the `data` directory, the file strutures are as follows:
 ```bash
 ./data/BFM
 ├── 01_MorphableModel.mat
@@ -48,7 +53,6 @@ And pay attention to the corresponding audio file is placed in the rendered imag
 ├── BFM_front_idx.mat
 ├── BFM_model_front.mat
 ├── Exp_Pca.bin
-├── face05_4seg.mat
 ├── facemodel_info.mat
 ├── select_vertex_id.mat
 ├── similarity_Lm3D_all.mat
