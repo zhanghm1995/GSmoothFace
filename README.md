@@ -23,16 +23,16 @@ pip install .
 ## Demo
 
 ### Data preparation
-First of all, please prepare the driven audio you want to test and place them in `./data/audio_samples` folder.
+First of all, please prepare the driven audio you want to test and place them in `./data/audio_samples` folder. Here we provide some audio samples for you quickly testing in [BaiduNetDisk](https://pan.baidu.com/s/1v9nlpLgrrEZXy53bwKsvNQ) (code: uhg9).
 
 ### Run the demo script
-Run the following command in the terminal. And before run the demo, please change the `--checkpoint_dir` in the script to specify the path of saved results.
+Run the following command in the terminal. And before run the demo, please change the `--checkpoint_dir` in the script to specify the path of saved results. And please update the `checkpoint` in the script to specify the path of pretrained model.
 
 ```bash
 bash demo.sh
 ```
 
-**Note**: if you want to visualize the generated results, you need to specify the `deep3dface_dir` path in the `demo.yaml` file. The visualization results will be save in `work_dir/demo/lightning_logs/version_*/vis/train/*` by default.
+The results will be saved to `<checkpoint_dir>/lightning_logs/version_*/vis/train/*` by default, containing the predicted expression parameters in `.npy` format, the rendered video without head pose in `.mp4` format. You can play this video for checking the lip-synchronization performance.
 
 
 ### Generate the video
@@ -89,7 +89,10 @@ python main_train_one_hot.py --cfg config/gsmoothface_small.yaml
 
 #### Step 2: Train the `TAFT` model
 ```bash
+git clone https://github.com/zhanghm1995/GSmoothFace_TAFT
 
+cd GSmoothFace_TAFT
+bash train.sh
 ```
 
 #### Step 3: Inference
@@ -107,17 +110,31 @@ Step 3.2: Render the predicted 3DMM parameters with head poses.
 ```bash
 bash app/main_render_pred_results.sh
 ```
-The rendered results and will be placed in the `<output_root>` specified by yourself. You can also make a sound video with our provided script:
+The rendered results will be placed in the `<output_root>` specified by yourself. You can also make a sound video with our provided script:
 ```bash
 bash create_video_app.sh
 ```
 
-Step 3.3: Generate the final talking face video via the **TAFT** module.
+Step 3.3: Generate the final talking face video via the [TAFT](https://github.com/zhanghm1995/GSmoothFace_TAFT) module.
 ```bash
-
+cd GSmoothFace_TAFT
+bash demo.sh
 ```
 
 ## Acknowledgement
 
-We gratefully acknowledge the [Deep3DFace_pytorch](https://github.com/sicxu/Deep3DFaceRecon_pytorch) etc. open source projects.
+We gratefully acknowledge the [Deep3DFace_pytorch](https://github.com/sicxu/Deep3DFaceRecon_pytorch), [FaceFormer](https://github.com/EvelynFan/FaceFormer) etc. open source projects.
 
+
+## Citation
+
+If you find this code is helpful, please cite our paper
+
+```tex
+@article{zhang2023gsmoothface,
+  title   = {GSmoothFace: Generalized Smooth Talking Face Generation via Fine Grained 3D Face Guidance},
+  author  = {Haiming Zhang and Zhihao Yuan and Chaoda Zheng and Xu Yan and Baoyuan Wang and Guanbin Li and Song Wu and Shuguang Cui and Zhen Li},
+  year    = {2023},
+  journal = {arXiv preprint arXiv: 2312.07385}
+}
+```
